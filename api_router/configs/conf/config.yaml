@@ -1,0 +1,2 @@
+server:
+  jwtSecret:123456  # jwt密码
