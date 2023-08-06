@@ -1,0 +1,16 @@
+syntax="proto3";
+package pb;
+option go_package = "../;service";  // 此处格式为<生成的文件存放位置;生成文件的包名>
+
+
+message UserRegisterRequest{
+  // @gotags:json:"username"
+  string Username = 1;  // 账号
+  // @gotags:json:"password"
+  string Password = 2;  // 密码
+}
+
+message UserRegisterResponse{
+  // @gotags:json:"user_id"
+  int64 UserId = 1;  // 用户id
+}
