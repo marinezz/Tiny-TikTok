@@ -2,15 +2,28 @@ syntax="proto3";
 package pb;
 option go_package = "../;service";  // 此处格式为<生成的文件存放位置;生成文件的包名>
 
+//  protoc -I internal/service/pb --go_out=./internal/service/ --go_opt=paths=source_relative --go-grpc_out=./internal/service/ --go-grpc_opt=paths=source_relative internal/service/pb/*.proto
+//  或者分开使用
+//  protoc -I internal/service/pb/ --go_out=./ internal/service/pb/*.proto
+//  protoc -I internal/service/pb/ --go-grpc_out=./  internal/service/pb/*.proto
 
-message UserRegisterRequest{
+message UserRequest{
   // @gotags:json:"username"
   string Username = 1;  // 账号
   // @gotags:json:"password"
   string Password = 2;  // 密码
 }
 
-message UserRegisterResponse{
+message UserResponse{
+  // @gotags:json:"status_code"
+  int32  StatusCode = 1;
+  // @gotags:json:"status_msg"
+  string StatusMsg = 2;
   // @gotags:json:"user_id"
-  int64 UserId = 1;  // 用户id
+  int64 UserId = 3;  // 用户id
+}
+
+service UserService{
+  rpc UserRegister(UserRequest) returns(UserResponse);
+  rpc UserLogin(UserRequest) returns(UserResponse);
 }

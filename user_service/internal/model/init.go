@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 	"time"
-	"user/configs/config"
+	"user/config"
 )
 
 // DB 创建数据库单例

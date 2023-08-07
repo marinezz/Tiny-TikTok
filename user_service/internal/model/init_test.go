@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/spf13/viper"
 	"testing"
-	"user/configs/config"
+	"user/config"
 )
 
 func TestInitDb(t *testing.T) {

@@ -1,17 +1,21 @@
 package model
 
 import (
+	"fmt"
 	"testing"
-	"user/internal/service"
 )
 
 func TestUser_Create(t *testing.T) {
 	InitDb()
-	u := new(User)
-	req := new(service.UserRegisterRequest)
-	req.Username = "marine"
-	req.Password = "123456"
+	user := &User{
+		UserName: "张三",
+		PassWord: "123456",
+	}
+	GetInstance().Create(user)
+}
 
-	u.Create(req)
-
+func TestUserModel_FindUserByName(t *testing.T) {
+	InitDb()
+	user, _ := GetInstance().FindUserByName("ben")
+	fmt.Print(user.Id)
 }

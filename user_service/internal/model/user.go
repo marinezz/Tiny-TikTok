@@ -1,6 +1,10 @@
 package model
 
-import "user/internal/service"
+import (
+	"sync"
+	"user/pkg/encryption"
+	"utils/snowFlake"
+)
 
 type User struct {
 	Id              int64  `gorm:"primary_key"`
@@ -11,12 +15,37 @@ type User struct {
 	Signature       string `gorm:"default:该用户还没有简介"` // 个人简介
 }
 
+type UserModel struct {
+}
+
+var userModel *UserModel
+var userOnce sync.Once // 单例模式
+
+// GetInstance 获取单例实例
+func GetInstance() *UserModel {
+	userOnce.Do(
+		func() {
+			userModel = &UserModel{}
+		},
+	)
+	return userModel
+}
+
 // Create 创建用户
-func (*User) Create(request *service.UserRegisterRequest) error {
-	user := User{
-		UserName: request.Username,
-		PassWord: request.Password,
-	}
-	DB.Create(user)
+func (*UserModel) Create(user *User) error {
+	flake, _ := snowFlake.NewSnowFlake(7, 1)
+	user.Id = flake.NextId()
+	user.PassWord = encryption.HashPassword(user.PassWord)
+	DB.Create(&user)
 	return nil
+}
+
+// FindUserByName 根据用户名称查找用户,并返回对象
+func (*UserModel) FindUserByName(username string) (*User, error) {
+	user := User{}
+	res := DB.Where("user_name=?", username).First(&user)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+	return &user, nil
 }

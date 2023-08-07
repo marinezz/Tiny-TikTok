@@ -3,15 +3,17 @@ package config
 import (
 	"fmt"
 	"github.com/spf13/viper"
-	"path/filepath"
+	"path"
+	"runtime"
 	"testing"
 )
 
 func TestInitConfig(t *testing.T) {
-	var configDir = "../"
-	absDir, _ := filepath.Abs(configDir)
+	_, filePath, _, _ := runtime.Caller(0)
 
-	fmt.Print(absDir)
+	currentDir := path.Dir(filePath)
+
+	fmt.Println(currentDir)
 }
 
 func TestDbDnsInit(t *testing.T) {
