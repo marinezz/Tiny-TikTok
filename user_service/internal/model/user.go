@@ -1,6 +1,7 @@
 package model
 
 import (
+	"gorm.io/gorm"
 	"sync"
 	"user/pkg/encryption"
 	"utils/snowFlake"
@@ -48,4 +49,15 @@ func (*UserModel) FindUserByName(username string) (*User, error) {
 		return nil, res.Error
 	}
 	return &user, nil
+}
+
+// CheckUserExist 检查User是否存在（已经被注册过了）
+func (*UserModel) CheckUserExist(username string) bool {
+	user := User{}
+	err := DB.Where("user_name=?", username).First(&user).Error
+	if err == gorm.ErrRecordNotFound {
+		return false
+	}
+
+	return true
 }

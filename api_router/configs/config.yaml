@@ -1,6 +1,7 @@
 server:
-  name: user_service  # 服务名称
-  address: 127.0.0.1:10001  # 服务地址
+  name: api_router  # 服务名称
+  address: 127.0.0.1:10000  # 服务地址
+  jwtSecret: 123456  # jwt密码
 
 
 mysql:

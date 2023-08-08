@@ -1,27 +1,17 @@
-package main
+// 服务发现,发现所有的服务，并写入context中
+
+package discovery
 
 import (
-	config "api_router/configs"
 	"api_router/internal/service"
-	"context"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
 	"utils/etcd"
 )
 
-func main() {
-	config.InitConfig()
-
-	c := make(chan os.Signal, 1)
-	go func() {
-		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-	}()
-
+func resolver() {
 	etcdAddress := viper.GetString("etcd.address")
 	serviceDiscovery, err := etcd.NewServiceDiscovery([]string{etcdAddress})
 	if err != nil {
@@ -39,18 +29,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer conn.Close()
 
 	client := service.NewUserServiceClient(conn)
-	req := &service.UserRequest{
-		Username: "zzz",
-		Password: "123456",
-	}
 
-	resq, err := client.UserRegister(context.Background(), req)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Printf("%+v", resq)
+	// Todo 将服务实例放入context中
 }

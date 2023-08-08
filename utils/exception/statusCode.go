@@ -12,7 +12,9 @@ const (
 	SUCCESS = 200
 	ERROR   = 500
 
-	RequestERROR = 1000
+	RequestERROR = 1000 // token相关
 	UnAuth       = 1001
 	TokenTimeOut = 1002
+
+	UserExist = 1100 // 数据库相关
 )

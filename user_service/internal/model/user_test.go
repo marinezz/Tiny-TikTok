@@ -19,3 +19,9 @@ func TestUserModel_FindUserByName(t *testing.T) {
 	user, _ := GetInstance().FindUserByName("ben")
 	fmt.Print(user.Id)
 }
+
+func TestUserModel_CheckUserExist(t *testing.T) {
+	InitDb()
+	exist := GetInstance().CheckUserExist("lisi")
+	fmt.Println(exist)
+}
