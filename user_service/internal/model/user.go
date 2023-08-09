@@ -61,3 +61,7 @@ func (*UserModel) CheckUserExist(username string) bool {
 
 	return false
 }
+
+func (*UserModel) CheckPassWord(password string, storePassword string) bool {
+	return encryption.VerifyPasswordWithHash(password, storePassword)
+}

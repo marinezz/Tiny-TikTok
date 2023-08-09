@@ -16,5 +16,7 @@ const (
 	UnAuth       = 1001
 	TokenTimeOut = 1002
 
-	UserExist = 1100 // 数据库相关
+	UserExist     = 1100 // 数据库相关
+	UserUnExist   = 1101
+	PasswordError = 1102
 )

@@ -13,3 +13,13 @@ func HashPassword(password string) string {
 	}
 	return string(hashedPassword)
 }
+
+// VerifyPasswordWithHash 方法验证传入的密码与数据库中的密码哈希是否匹配
+func VerifyPasswordWithHash(inputPassword string, storedHash string) bool {
+	// 将数据库中的密码哈希字符串解析为哈希字节
+	storedHashBytes := []byte(storedHash)
+
+	// 使用 bcrypt 提供的 CompareHashAndPassword 方法比较密码
+	err := bcrypt.CompareHashAndPassword(storedHashBytes, []byte(inputPassword))
+	return err == nil
+}

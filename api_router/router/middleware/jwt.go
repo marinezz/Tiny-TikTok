@@ -12,13 +12,12 @@ import (
 func JWTMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var code int
-		code = 200
+		code = exception.SUCCESS
 		// token 可能在query中也可能在postForm中
 		token := c.Query("token")
 		if token == "" {
 			token = c.PostForm("token")
 		}
-
 		// token不存在
 		if token == "" {
 			code = exception.RequestERROR

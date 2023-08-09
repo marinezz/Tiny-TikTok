@@ -2,8 +2,6 @@ package handler
 
 import (
 	"context"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"user/internal/model"
 	"user/internal/service"
 	"utils/exception"
@@ -45,6 +43,29 @@ func (*UserService) UserRegister(ctx context.Context, req *service.UserRequest) 
 	return resp, nil
 }
 
-func (*UserService) UserLogin(ctx context.Context, req *service.UserRequest) (*service.UserResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UserLogin not implemented")
+func (*UserService) UserLogin(ctx context.Context, req *service.UserRequest) (resp *service.UserResponse, err error) {
+	resp = new(service.UserResponse)
+
+	// 检查用户是否存在
+	if exist := model.GetInstance().CheckUserExist(req.Username); exist {
+		resp.StatusCode = exception.UserUnExist
+		resp.StatusMsg = exception.GetMsg(exception.UserUnExist)
+		resp.UserId = -1
+		return resp, nil
+	}
+
+	// 检查密码是否正确
+	user, err := model.GetInstance().FindUserByName(req.Username)
+	if ok := model.GetInstance().CheckPassWord(req.Password, user.PassWord); !ok {
+		resp.StatusCode = exception.PasswordError
+		resp.StatusMsg = exception.GetMsg(exception.PasswordError)
+		resp.UserId = -1
+		return resp, nil
+	}
+
+	resp.StatusCode = exception.SUCCESS
+	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
+	resp.UserId = user.Id
+
+	return resp, nil
 }

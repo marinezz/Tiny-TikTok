@@ -24,8 +24,8 @@ func InitRouter(serveInstance map[string]interface{}) *gin.Engine {
 
 		// 用户
 		baseGroup.POST("/user/register", handler.UserRegister)
-		baseGroup.POST("/user/login")
-		baseGroup.GET("/user", middleware.JWTMiddleware())
+		baseGroup.POST("/user/login", handler.UserLogin)
+		baseGroup.GET("/user", middleware.JWTMiddleware(), handler.UserInfo)
 
 		// 视频
 		publishGroup := baseGroup.Group("/publish")
