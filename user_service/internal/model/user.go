@@ -56,8 +56,8 @@ func (*UserModel) CheckUserExist(username string) bool {
 	user := User{}
 	err := DB.Where("user_name=?", username).First(&user).Error
 	if err == gorm.ErrRecordNotFound {
-		return false
+		return true
 	}
 
-	return true
+	return false
 }

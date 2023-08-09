@@ -9,8 +9,8 @@ package exception
 //* 5. 大的错误类间的步长间距预留100
 
 const (
-	SUCCESS = 200
-	ERROR   = 500
+	SUCCESS = 0  // 常规的返回成功
+	ERROR   = -1 // 常规返回失败
 
 	RequestERROR = 1000 // token相关
 	UnAuth       = 1001

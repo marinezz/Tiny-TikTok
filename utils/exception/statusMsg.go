@@ -1,6 +1,7 @@
 package exception
 
 var Msg = map[int]string{
+
 	SUCCESS: "OK",
 	ERROR:   "fail",
 

@@ -1,4 +1,4 @@
-// 服务发现,发现所有的服务，并写入context中
+// 服务发现,发现所有的服务，返回一个map
 
 package discovery
 
@@ -11,7 +11,9 @@ import (
 	"utils/etcd"
 )
 
-func resolver() {
+func Resolver() map[string]interface{} {
+	serveInstance := make(map[string]interface{})
+
 	etcdAddress := viper.GetString("etcd.address")
 	serviceDiscovery, err := etcd.NewServiceDiscovery([]string{etcdAddress})
 	if err != nil {
@@ -19,18 +21,20 @@ func resolver() {
 	}
 	defer serviceDiscovery.Close()
 
+	// 获取用户服务实例
 	err = serviceDiscovery.ServiceDiscovery("user_service")
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	serviceAddr, _ := serviceDiscovery.GetService("user_service")
-	conn, err := grpc.Dial(serviceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	userServiceAddr, _ := serviceDiscovery.GetService("user_service")
+	userConn, err := grpc.Dial(userServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatal(err)
 	}
+	userClient := service.NewUserServiceClient(userConn)
+	serveInstance["user_service"] = userClient
 
-	client := service.NewUserServiceClient(conn)
+	// todo 获取其它服务实例
 
-	// Todo 将服务实例放入context中
+	return serveInstance
 }

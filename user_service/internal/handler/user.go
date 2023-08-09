@@ -22,7 +22,7 @@ func (*UserService) UserRegister(ctx context.Context, req *service.UserRequest) 
 	var user model.User
 
 	// 检查用户是否已经存在
-	if model.GetInstance().CheckUserExist(req.Username) {
+	if exist := model.GetInstance().CheckUserExist(req.Username); !exist {
 		resp.StatusCode = exception.UserExist
 		resp.StatusMsg = exception.GetMsg(exception.UserExist)
 		resp.UserId = -1
