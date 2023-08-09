@@ -69,3 +69,25 @@ func (*UserService) UserLogin(ctx context.Context, req *service.UserRequest) (re
 
 	return resp, nil
 }
+
+// UserInfo 用户信息 Todo：可以把查询到的用户放入redis中
+func (*UserService) UserInfo(ctx context.Context, req *service.UserInfoRequest) (resp *service.UserInfoResponse, err error) {
+	resp = new(service.UserInfoResponse)
+
+	user, _ := model.GetInstance().FindUserById(req.UserId)
+	resp.StatusCode = exception.SUCCESS
+	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
+	resp.User = BuildUser(user)
+	return resp, nil
+}
+
+func BuildUser(u *model.User) *service.User {
+	user := service.User{
+		Id:              u.Id,
+		Name:            u.UserName,
+		Avatar:          u.Avatar,
+		BackgroundImage: u.BackgroundImage,
+		Signature:       u.Signature,
+	}
+	return &user
+}

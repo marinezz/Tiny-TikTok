@@ -7,27 +7,52 @@ option go_package = "../;service";  // 此处格式为<生成的文件存放位�
 //  protoc -I internal/service/pb/ --go_out=./ internal/service/pb/*.proto
 //  protoc -I internal/service/pb/ --go-grpc_out=./  internal/service/pb/*.proto
 
-// require_unimplemented_servers=false
-
-// protoc -I internal/service/pb --go_out=./internal/service/ --go_opt=paths=source_relative --go-grpc_out=require_unimplemented_servers=false/internal/service/ --go-grpc_opt=paths=source_relative internal/service/pb/*.proto
-
 message UserRequest{
-  // @gotags:json:"username"
+  // @gotags:json:"username" form:"username" uri:"username"
   string Username = 1;  // 账号
-  // @gotags:json:"password"
+  // @gotags:json:"password" form:"password" uri:"password"
   string Password = 2;  // 密码
 }
 
 message UserResponse{
-  // @gotags:json:"status_code"
+  // @gotags:json:"status_code" form:"status_code" uri:"status_code"
   int32  StatusCode = 1;
-  // @gotags:json:"status_msg"
+  // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
   string StatusMsg = 2;
-  // @gotags:json:"user_id"
+  // @gotags:json:"user_id" form:"user_id" uri:"user_id"
   int64 UserId = 3;  // 用户id
 }
+
+message User {
+  // @gotags:json:"id" form:"id" uri:"id"
+  int64 Id = 1;
+  // @gotags:json:"name" form:"name" uri:"name"
+  string Name = 2;
+  // @gotags:json:"avatar" form:"avatar" uri:"avatar"
+  string Avatar = 3;  // 用户头像
+  // @gotags:json:"background_image" form:"background_image" uri:"background_image"
+  string BackgroundImage = 4;  // 用户背景图
+  // @gotags:json:"signature" form:"signature" uri:"signature"
+  string Signature = 5;  // 用户签名
+}
+
+message UserInfoRequest {
+  // @gotags:json:"user_id" form:"user_id" uri:"user_id"
+  int64 UserId = 1;
+}
+
+message UserInfoResponse {
+  // @gotags:json:"status_code" form:"status_code" uri:"status_code"
+  int32  StatusCode = 1;
+  // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
+  string StatusMsg = 2;
+  // @gotags:json:"user" form:"user" uri:"user"
+  User User = 3;  // 用户信息
+}
+
 
 service UserService{
   rpc UserRegister(UserRequest) returns(UserResponse);
   rpc UserLogin(UserRequest) returns(UserResponse);
+  rpc UserInfo(UserInfoRequest) returns(UserInfoResponse);
 }

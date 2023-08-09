@@ -51,6 +51,16 @@ func (*UserModel) FindUserByName(username string) (*User, error) {
 	return &user, nil
 }
 
+func (*UserModel) FindUserById(userid int64) (*User, error) {
+	user := User{}
+	res := DB.Where("id=?", userid).First(&user)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+
+	return &user, nil
+}
+
 // CheckUserExist 检查User是否存在（已经被注册过了）
 func (*UserModel) CheckUserExist(username string) bool {
 	user := User{}
@@ -62,6 +72,7 @@ func (*UserModel) CheckUserExist(username string) bool {
 	return false
 }
 
+// CheckPassWord 检查密码是否正确
 func (*UserModel) CheckPassWord(password string, storePassword string) bool {
 	return encryption.VerifyPasswordWithHash(password, storePassword)
 }

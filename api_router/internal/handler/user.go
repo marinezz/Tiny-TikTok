@@ -7,6 +7,7 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 )
 
 // UserRegister 用户注册
@@ -53,8 +54,22 @@ func UserLogin(ctx *gin.Context) {
 }
 
 func UserInfo(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, gin.H{
-		"message": "ok",
-		"code":    1011,
-	})
+	var userInfoReq service.UserInfoRequest
+
+	// Todo 两种方法获取参数，没懂为什么get也可以获取   只实现了用户服务相关的其余服务还未实现
+	userId := ctx.Query("user_id")
+	userInfoReq.UserId, _ = strconv.ParseInt(userId, 10, 64)
+	//userId, _ := ctx.Get("user_id")
+	//userInfoReq.UserId, _ = userId.(int64)
+
+	userServiceClient := ctx.Keys["user_service"].(service.UserServiceClient)
+	userResp, _ := userServiceClient.UserInfo(context.Background(), &userInfoReq)
+
+	r := res.UserInfoResponse{
+		StatusCode: userResp.StatusCode,
+		StatusMsg:  userResp.StatusMsg,
+		User:       userResp.User,
+	}
+
+	ctx.JSON(http.StatusOK, r)
 }
