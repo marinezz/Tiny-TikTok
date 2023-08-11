@@ -56,7 +56,7 @@ func UserLogin(ctx *gin.Context) {
 func UserInfo(ctx *gin.Context) {
 	var userInfoReq service.UserInfoRequest
 
-	// Todo 两种方法获取参数，没懂为什么get也可以获取   只实现了用户服务相关的其余服务还未实现
+	// jwt中间件会解析token，然后把user_id放入context中，所以用两种方式都可以获取到user_id
 	userId := ctx.Query("user_id")
 	userInfoReq.UserId, _ = strconv.ParseInt(userId, 10, 64)
 	//userId, _ := ctx.Get("user_id")
