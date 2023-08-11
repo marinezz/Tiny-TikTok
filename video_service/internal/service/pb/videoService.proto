@@ -1,0 +1,162 @@
+syntax="proto3";
+package pb;
+option go_package = "../;service";  // 此处格式为<生成的文件存放位置;生成文件的包名>
+
+
+message Video {
+  // @gotags:json:"id" form:"id" uri:"id"
+  int64 Id = 1;
+  // @gotags:json:"play_url" form:"play_rul" uri:"play_url"
+  string PlayUrl = 2;  // 视频播放地址
+  // @gotasgs:json:"cover_url" form:"cover_url" uri:"cover_url"
+  string CoverUrl = 3;
+  // @gotags:json:"favorite_count" form:"favorite_count" uri:"favorite_count"
+  int32 FavoriteCount = 4;
+  // @gotags:json:"comment_count" form:"comment_count" uri:"comment_count"
+  int32 CommentCount = 5;
+  // @gotags:json:"is_favorite" form:"is_favorite" uri:"is_favorite"
+  bool IsFavorite = 6;
+  // @gotags:json:"title" form:"title" uri:"title"
+  string Title = 7;
+}
+
+message Comment {
+  // @gotags:json:"id" form:"id" uri:"id"
+  int64 Id = 1;
+  // @gotags:json:"content" form:"content" uri:"content"
+  string Content = 2;  // 评论内容
+  // @gotags:json:"create_date" form:"create_date" uri:"create_date"
+  string CreateDate = 3;
+}
+
+// 视频流
+message FeedRequest {
+  // @gotags:json:"latest_time" form:"latest_time" uri:"latest_time"
+  int64 LatestTime = 1;  // 可选参数，限制返回视频的最新投稿时间戳，精确到秒，不填表示当前时间
+  // @gotags:json:"user_id" form:"user_id" uri:"user_id"
+  int64 UserId = 2;
+}
+
+message FeedResponse {
+  // @gotags:json:"status_code" form:"status_code" uri:"status_code"
+  int32 StatusCode = 1;
+  // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
+  string StatusMsg = 2;
+  // @gotags:json:"video_list" form:"video_list" uri:"video_list"
+  repeated Video VideoList = 3;
+  // @gotags:json:"next_time" form:"next_time" uri:"next_time"
+  int64 NextTime = 4;
+}
+
+// 发布视频
+message PublishActionRequest {
+  // @gotags:json:"data" form:"data" uri:"data"
+  bytes Data = 1;
+  // @gotags:json:"title" form:"title" uri:"title"
+  string Title = 2;
+}
+
+message PublishActionResponse {
+  // @gotags:json:"status_code" form:"status_code" uri:"status_code"
+  int32 StatusCode = 1;
+  // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
+  string StatusMsg = 2;
+}
+
+// 发布列表
+message PublishListRequest {
+  // @gotags:json:"user_id" form:"user_id" uri:"user_id"
+  int64 UserId = 1;
+}
+
+message PublishListResponse {
+  // @gotags:json:"status_code" form:"status_code" uri:"status_code"
+  int32 StatusCode = 1;
+  // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
+  string StatusMsg = 2;
+  // @gotags:json:"video_list" form:"video_list" uri:"video_list"
+  repeated Video VideoList = 3;
+}
+
+// 赞操作
+message FavoriteActionRequest {
+  // @gotags:json:"user_id" form:"user_id" uri:"user_id"
+  int64 UserId = 1;
+  // @gotags:json:"video_id" form:"video_id" uri:"video_id"
+  int64 VideoId = 2;
+  // @gotags:json:"action_type" form:"action_type" uri:"action_type"
+  int32 ActionType = 3;  // 1-点赞，2-取消点赞
+}
+
+message FavoriteActionResponse {
+  // @gotags:json:"status_code" form:"status_code" uri:"status_code"
+  int32 StatusCode = 1;
+  // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
+  string StatusMsg = 2;
+}
+
+
+// 喜欢列表
+message FavoriteListRequest {
+  // @gotags:json:"user_id" form:"user_id" uri:"user_id"
+  int64 UserId = 1;
+}
+
+message FavoriteListResponse {
+  // @gotags:json:"status_code" form:"status_code" uri:"status_code"
+  int32 StatusCode = 1;
+  // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
+  string StatusMsg = 2;
+  // @gotags:json:"video_list" form:"video_list" uri:"video_list"
+  repeated Video VideoList = 3;
+}
+
+
+// 评论操作
+message CommentActionRequest {
+  // @gotags:json:"video_id" form:"video_id" uri:"video_id"
+  int64 VideoId = 1;
+  // @gotags:json:"action_type" form:"action_type" uri:"action_type"
+  int32 ActionType = 2;
+  // @gotags:json:"comment_text" form:"comment_text" uri:"comment_text"
+  string CommentText = 3; // 可选，用户填写的评论内容，在action_type=1的时候使用
+  // @gotags:json:"comment_id" form:"comment_id" uri:"comment_id"
+  int64 CommentId = 4;  // 可选，要删除的评论id，在action_type=2的时候使用
+}
+
+message CommentActionResponse {
+  // @gotags:json:"status_code" form:"status_code" uri:"status_code"
+  int32 StatusCode = 1;
+  // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
+  string StatusMsg = 2;
+  // @gotags:json:"comment" form:"comment" uri:"comment"
+  Comment Comment = 3;
+}
+
+// 评论列表
+message CommentListRequest {
+  // @gotags:json:"video_id" form:"video_id" uri:"video_id"
+  int64 VideoId = 1;
+}
+
+message CommentListResponse {
+  // @gotags:json:"status_code" form:"status_code" uri:"status_code"
+  int32 StatusCode = 1;
+  // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
+  string StatusMsg = 2;
+  // @gotags:json:"comment_list" form:"comment_list" uri:"comment_list"
+  repeated Comment CommentList = 3;
+}
+
+service VideoService {
+  rpc Feed(FeedRequest) returns(FeedResponse);
+  rpc PublishAction(PublishActionRequest) returns (PublishActionResponse);
+  rpc PublishList(PublishListRequest) returns(PublishListResponse);
+
+  rpc FavoriteAction(FavoriteActionRequest) returns(FavoriteActionResponse);
+  rpc FavoriteList(FavoriteListRequest) returns(FavoriteListResponse);
+
+  rpc CommentAction(CommentActionRequest) returns(CommentActionResponse);
+  rpc CommentList(CommentListRequest) returns(CommentListResponse);
+}
+

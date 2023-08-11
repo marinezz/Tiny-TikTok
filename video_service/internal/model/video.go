@@ -1,6 +1,9 @@
 package model
 
-import "sync"
+import (
+	"sync"
+	"time"
+)
 
 type Video struct {
 	Id            int64 `gorm:"primary_key"`
@@ -10,6 +13,7 @@ type Video struct {
 	PlayUrl       string `gorm:"default:(-)"`
 	FavoriteCount int    `gorm:"default:(-)"`
 	CommentCount  int    `gorm:"default:(-)"`
+	CreatAt       time.Time
 }
 
 type VideoModel struct {
