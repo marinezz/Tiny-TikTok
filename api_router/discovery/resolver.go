@@ -34,6 +34,19 @@ func Resolver() map[string]interface{} {
 	userClient := service.NewUserServiceClient(userConn)
 	serveInstance["user_service"] = userClient
 
+	// 获取视频服务实例
+	err = serviceDiscovery.ServiceDiscovery("video_service")
+	if err != nil {
+		log.Fatal(err)
+	}
+	videoServiceAddr, _ := serviceDiscovery.GetService("video_service")
+	videoConn, err := grpc.Dial(videoServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	videoClient := service.NewVideoServiceClient(videoConn)
+	serveInstance["video_service"] = videoClient
 	// todo 获取其它服务实例
 
 	return serveInstance

@@ -3,11 +3,12 @@ package model
 import (
 	"sync"
 	"time"
+	"utils/snowFlake"
 )
 
 type Video struct {
 	Id            int64 `gorm:"primary_key"`
-	AuthId        string
+	AuthId        int64
 	Title         string
 	CoverUrl      string `gorm:"default:(-)"`
 	PlayUrl       string `gorm:"default:(-)"`
@@ -29,4 +30,13 @@ func GetVideoInstance() *VideoModel {
 			videoMedel = &VideoModel{}
 		})
 	return videoMedel
+}
+
+// Create 创建视频信息
+func (*VideoModel) Create(video *Video) error {
+	// 服务2
+	flake, _ := snowFlake.NewSnowFlake(7, 2)
+	video.Id = flake.NextId()
+	DB.Create(&video)
+	return nil
 }

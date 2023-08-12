@@ -12,3 +12,8 @@ type UserInfoResponse struct {
 	StatusMsg  string      `json:"status_msg,omitempty"`
 	User       interface{} `json:"user"`
 }
+
+type PublishActionResponse struct {
+	StatusCode int32  `json:"status_code"`
+	StatusMsg  string `json:"status_msg,omitempty"`
+}

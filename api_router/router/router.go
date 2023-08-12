@@ -10,6 +10,7 @@ import (
 
 func InitRouter(serveInstance map[string]interface{}) *gin.Engine {
 	r := gin.Default()
+
 	r.Use(middleware.ServeMiddleware(serveInstance))
 	// 测试
 	r.GET("/ping", func(c *gin.Context) {
@@ -31,7 +32,7 @@ func InitRouter(serveInstance map[string]interface{}) *gin.Engine {
 		publishGroup := baseGroup.Group("/publish")
 		publishGroup.Use(middleware.JWTMiddleware())
 		{
-			publishGroup.POST("/action")
+			publishGroup.POST("/action/", handler.PublishAction)
 			publishGroup.GET("/list")
 		}
 		favoriteGroup := baseGroup.Group("favorite")
