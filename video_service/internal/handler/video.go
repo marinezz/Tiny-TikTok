@@ -3,6 +3,8 @@ package handler
 import (
 	"context"
 	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"log"
 	"time"
 	"utils/exception"
@@ -18,6 +20,11 @@ type VideoService struct {
 
 func NewVideoService() *VideoService {
 	return &VideoService{}
+}
+
+func (*VideoService) Feed(ctx context.Context, req *service.FeedRequest) (resp *service.FeedResponse, err error) {
+
+	return nil, status.Errorf(codes.Unimplemented, "method Feed not implemented")
 }
 
 func (*VideoService) PublishAction(ctx context.Context, req *service.PublishActionRequest) (resp *service.PublishActionResponse, err error) {
@@ -58,6 +65,35 @@ func (*VideoService) PublishAction(ctx context.Context, req *service.PublishActi
 		resp.StatusMsg = exception.GetMsg(exception.ERROR)
 		return resp, nil
 	}
+	resp.StatusCode = exception.SUCCESS
+	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
+
+	return resp, nil
+}
+
+func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteActionRequest) (resp *service.FavoriteActionResponse, err error) {
+	resp = new(service.FavoriteActionResponse)
+
+	action := req.ActionType
+	var favorite model.Favorite
+	favorite.UserId = req.UserId
+	favorite.VideoId = req.VideoId
+	// 点赞操作
+	if action == 1 {
+		// 操作favorite表
+		model.GetFavoriteInstance().AddFavorite(&favorite)
+		// 操作video表，喜欢记录 + 1
+		model.GetVideoInstance().AddFavoriteCount(req.VideoId)
+	}
+
+	// 取消赞操作
+	if action == 2 {
+		// 操作favorite表
+		model.GetFavoriteInstance().DeleteFavorite(&favorite)
+		// 操作video表
+		model.GetVideoInstance().DeleteFavoriteCount(req.VideoId)
+	}
+
 	resp.StatusCode = exception.SUCCESS
 	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
 

@@ -42,6 +42,13 @@ func PublishAction(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, r)
 }
 
+func PublishList(ctx *gin.Context) {
+	token := ctx.Query("token")
+	ctx.JSON(http.StatusOK, gin.H{
+		"token": token,
+	})
+}
+
 func PanicIfPublishError(err error) {
 	if err != nil {
 		err = errors.New("publishService--error--" + err.Error())

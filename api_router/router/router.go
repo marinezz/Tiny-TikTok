@@ -33,18 +33,18 @@ func InitRouter(serveInstance map[string]interface{}) *gin.Engine {
 		publishGroup.Use(middleware.JWTMiddleware())
 		{
 			publishGroup.POST("/action/", handler.PublishAction)
-			publishGroup.GET("/list")
+			publishGroup.GET("/list", handler.PublishList)
 		}
 		favoriteGroup := baseGroup.Group("favorite")
 		favoriteGroup.Use(middleware.JWTMiddleware())
 		{
-			favoriteGroup.POST("action")
+			favoriteGroup.POST("action", handler.FavoriteAction)
 			favoriteGroup.GET("list")
 		}
 		commentGroup := baseGroup.Group("/comment")
 		commentGroup.Use(middleware.JWTMiddleware())
 		{
-			commentGroup.POST("/action")
+			commentGroup.POST("/action", handler.CommentAction)
 			commentGroup.GET("/list")
 		}
 		// 社交
