@@ -12,6 +12,7 @@ import (
 // FavoriteAction 喜欢操作
 func FavoriteAction(ctx *gin.Context) {
 	var favoriteActionReq service.FavoriteActionRequest
+
 	userId, _ := ctx.Get("user_id")
 	favoriteActionReq.UserId, _ = userId.(int64)
 	// string转int64

@@ -70,14 +70,7 @@ func (*FavoriteModel) DeleteFavorite(favorite *Favorite) error {
 		if result.Error != nil {
 			return result.Error
 		}
-	} else {
-		// 否则创建新记录
-		flake, _ := snowFlake.NewSnowFlake(7, 2)
-		favorite.Id = flake.NextId()
-		result = DB.Create(&favorite)
-		if result.Error != nil {
-			return result.Error
-		}
 	}
+
 	return nil
 }
