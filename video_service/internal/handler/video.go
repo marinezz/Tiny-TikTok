@@ -116,6 +116,9 @@ func (*VideoService) CommentAction(ctx context.Context, req *service.CommentActi
 		comment.CreatAt = time
 		id, _ := model.GetCommentInstance().CreateComment(&comment)
 
+		// 视频评论数量 + 1
+		model.GetVideoInstance().AddCommentCount(req.VideoId)
+
 		commentResp := &service.Comment{
 			Id:      id,
 			Content: req.CommentText,
@@ -133,6 +136,8 @@ func (*VideoService) CommentAction(ctx context.Context, req *service.CommentActi
 
 	// 删除评论
 	model.GetCommentInstance().DeleteComment(req.CommentId)
+	// 视频评论数量 - 1
+	model.GetVideoInstance().DeleteCommentCount(req.VideoId)
 
 	resp.StatusCode = exception.SUCCESS
 	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)

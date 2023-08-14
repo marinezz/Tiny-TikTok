@@ -60,3 +60,21 @@ func (*VideoModel) DeleteFavoriteCount(videoId int64) error {
 	return nil
 	return nil
 }
+
+// AddCommentCount 视频评论数量 + 1
+func (*VideoModel) AddCommentCount(videoId int64) error {
+	result := DB.Model(&Video{}).Where("id = ?", videoId).Update("comment_count", gorm.Expr("comment_count + ?", 1))
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
+// DeleteCommentCount 视频评论数量 - 1
+func (*VideoModel) DeleteCommentCount(videoId int64) error {
+	result := DB.Model(&Video{}).Where("id = ?", videoId).Update("comment_count", gorm.Expr("comment_count - ?", 1))
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
