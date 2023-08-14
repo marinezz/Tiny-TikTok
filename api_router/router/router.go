@@ -51,7 +51,7 @@ func InitRouter(serveInstance map[string]interface{}) *gin.Engine {
 		relationGroup := baseGroup.Group("/relation")
 		relationGroup.Use(middleware.JWTMiddleware())
 		{
-			relationGroup.POST("/action")
+			relationGroup.POST("/action", handler.FollowAction)
 			relationGroup.GET("/follow/list")
 			relationGroup.GET("/follower/list")
 			relationGroup.GET("/friend/list")
