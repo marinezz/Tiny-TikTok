@@ -21,7 +21,7 @@ func FavoriteAction(ctx *gin.Context) {
 	// string转int32
 	actionType := ctx.PostForm("action_type")
 	actionTypeValue, _ := strconv.Atoi(actionType)
-	favoriteActionReq.ActionType = int32(actionTypeValue)
+	favoriteActionReq.ActionType = int64(actionTypeValue)
 
 	videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
 	videoServiceResp, _ := videoServiceClient.FavoriteAction(context.Background(), &favoriteActionReq)

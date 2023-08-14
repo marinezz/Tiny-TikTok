@@ -74,3 +74,14 @@ func (*FavoriteModel) DeleteFavorite(favorite *Favorite) error {
 
 	return nil
 }
+
+// GetFavoriteCount 获取喜欢数量
+func (*FavoriteModel) GetFavoriteCount(userId int64) (int64, error) {
+	var count int64
+
+	DB.Table("favorite").
+		Where("user_id=? AND is_favorite=?", userId, true).
+		Count(&count)
+
+	return count, nil
+}

@@ -74,10 +74,17 @@ func (*UserService) UserLogin(ctx context.Context, req *service.UserRequest) (re
 func (*UserService) UserInfo(ctx context.Context, req *service.UserInfoRequest) (resp *service.UserInfoResponse, err error) {
 	resp = new(service.UserInfoResponse)
 
-	user, _ := model.GetInstance().FindUserById(req.UserId)
+	// 根据userId切片查询user信息
+	userIds := req.UserIds
+
+	for _, userId := range userIds {
+		user, _ := model.GetInstance().FindUserById(userId)
+		resp.Users = append(resp.Users, BuildUser(user))
+	}
+
 	resp.StatusCode = exception.SUCCESS
 	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
-	resp.User = BuildUser(user)
+
 	return resp, nil
 }
 

@@ -26,6 +26,7 @@ const (
 	VideoService_FavoriteList_FullMethodName   = "/pb.VideoService/FavoriteList"
 	VideoService_CommentAction_FullMethodName  = "/pb.VideoService/CommentAction"
 	VideoService_CommentList_FullMethodName    = "/pb.VideoService/CommentList"
+	VideoService_CountInfo_FullMethodName      = "/pb.VideoService/CountInfo"
 )
 
 // VideoServiceClient is the client API for VideoService service.
@@ -39,6 +40,8 @@ type VideoServiceClient interface {
 	FavoriteList(ctx context.Context, in *FavoriteListRequest, opts ...grpc.CallOption) (*FavoriteListResponse, error)
 	CommentAction(ctx context.Context, in *CommentActionRequest, opts ...grpc.CallOption) (*CommentActionResponse, error)
 	CommentList(ctx context.Context, in *CommentListRequest, opts ...grpc.CallOption) (*CommentListResponse, error)
+	// 根据user_id切片，返回计数信息
+	CountInfo(ctx context.Context, in *CountRequest, opts ...grpc.CallOption) (*CountResponse, error)
 }
 
 type videoServiceClient struct {
@@ -112,6 +115,15 @@ func (c *videoServiceClient) CommentList(ctx context.Context, in *CommentListReq
 	return out, nil
 }
 
+func (c *videoServiceClient) CountInfo(ctx context.Context, in *CountRequest, opts ...grpc.CallOption) (*CountResponse, error) {
+	out := new(CountResponse)
+	err := c.cc.Invoke(ctx, VideoService_CountInfo_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // VideoServiceServer is the server API for VideoService service.
 // All implementations must embed UnimplementedVideoServiceServer
 // for forward compatibility
@@ -123,6 +135,8 @@ type VideoServiceServer interface {
 	FavoriteList(context.Context, *FavoriteListRequest) (*FavoriteListResponse, error)
 	CommentAction(context.Context, *CommentActionRequest) (*CommentActionResponse, error)
 	CommentList(context.Context, *CommentListRequest) (*CommentListResponse, error)
+	// 根据user_id切片，返回计数信息
+	CountInfo(context.Context, *CountRequest) (*CountResponse, error)
 	mustEmbedUnimplementedVideoServiceServer()
 }
 
@@ -150,6 +164,9 @@ func (UnimplementedVideoServiceServer) CommentAction(context.Context, *CommentAc
 }
 func (UnimplementedVideoServiceServer) CommentList(context.Context, *CommentListRequest) (*CommentListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CommentList not implemented")
+}
+func (UnimplementedVideoServiceServer) CountInfo(context.Context, *CountRequest) (*CountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CountInfo not implemented")
 }
 func (UnimplementedVideoServiceServer) mustEmbedUnimplementedVideoServiceServer() {}
 
@@ -290,6 +307,24 @@ func _VideoService_CommentList_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _VideoService_CountInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VideoServiceServer).CountInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: VideoService_CountInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VideoServiceServer).CountInfo(ctx, req.(*CountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // VideoService_ServiceDesc is the grpc.ServiceDesc for VideoService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -324,6 +359,10 @@ var VideoService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CommentList",
 			Handler:    _VideoService_CommentList_Handler,
+		},
+		{
+			MethodName: "CountInfo",
+			Handler:    _VideoService_CountInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

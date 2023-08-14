@@ -61,3 +61,24 @@ func TestTime(t *testing.T) {
 	timeString := currentTime.Format("2006-01-02 15:04:05")
 	fmt.Println("Formatted time:", timeString)
 }
+
+// 测试用户获赞数量
+func TestVideoModel_GetFavoritedCount(t *testing.T) {
+	InitDb()
+	count, _ := GetVideoInstance().GetFavoritedCount(812575311663104)
+	fmt.Println(count)
+}
+
+// 统计作品数量
+func TestVideoModel_GetWorkCount(t *testing.T) {
+	InitDb()
+	count, _ := GetVideoInstance().GetWorkCount(812575311663104)
+	fmt.Println(count)
+}
+
+// 统计喜欢数量
+func TestFavorite_GetFavoriteCount(t *testing.T) {
+	InitDb()
+	count, _ := GetFavoriteInstance().GetFavoriteCount(812575311663104)
+	fmt.Println(count)
+}

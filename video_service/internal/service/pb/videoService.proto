@@ -11,9 +11,9 @@ message Video {
   // @gotasgs:json:"cover_url" form:"cover_url" uri:"cover_url"
   string CoverUrl = 3;
   // @gotags:json:"favorite_count" form:"favorite_count" uri:"favorite_count"
-  int32 FavoriteCount = 4;
+  int64 FavoriteCount = 4;
   // @gotags:json:"comment_count" form:"comment_count" uri:"comment_count"
-  int32 CommentCount = 5;
+  int64 CommentCount = 5;
   // @gotags:json:"is_favorite" form:"is_favorite" uri:"is_favorite"
   bool IsFavorite = 6;
   // @gotags:json:"title" form:"title" uri:"title"
@@ -39,7 +39,7 @@ message FeedRequest {
 
 message FeedResponse {
   // @gotags:json:"status_code" form:"status_code" uri:"status_code"
-  int32 StatusCode = 1;
+  int64 StatusCode = 1;
   // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
   string StatusMsg = 2;
   // @gotags:json:"video_list" form:"video_list" uri:"video_list"
@@ -60,7 +60,7 @@ message PublishActionRequest {
 
 message PublishActionResponse {
   // @gotags:json:"status_code" form:"status_code" uri:"status_code"
-  int32 StatusCode = 1;
+  int64 StatusCode = 1;
   // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
   string StatusMsg = 2;
 }
@@ -73,7 +73,7 @@ message PublishListRequest {
 
 message PublishListResponse {
   // @gotags:json:"status_code" form:"status_code" uri:"status_code"
-  int32 StatusCode = 1;
+  int64 StatusCode = 1;
   // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
   string StatusMsg = 2;
   // @gotags:json:"video_list" form:"video_list" uri:"video_list"
@@ -87,12 +87,12 @@ message FavoriteActionRequest {
   // @gotags:json:"video_id" form:"video_id" uri:"video_id"
   int64 VideoId = 2;
   // @gotags:json:"action_type" form:"action_type" uri:"action_type"
-  int32 ActionType = 3;  // 1-点赞，2-取消点赞
+  int64 ActionType = 3;  // 1-点赞，2-取消点赞
 }
 
 message FavoriteActionResponse {
   // @gotags:json:"status_code" form:"status_code" uri:"status_code"
-  int32 StatusCode = 1;
+  int64 StatusCode = 1;
   // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
   string StatusMsg = 2;
 }
@@ -106,7 +106,7 @@ message FavoriteListRequest {
 
 message FavoriteListResponse {
   // @gotags:json:"status_code" form:"status_code" uri:"status_code"
-  int32 StatusCode = 1;
+  int64 StatusCode = 1;
   // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
   string StatusMsg = 2;
   // @gotags:json:"video_list" form:"video_list" uri:"video_list"
@@ -121,7 +121,7 @@ message CommentActionRequest {
   // @gotags:json:"video_id" form:"video_id" uri:"video_id"
   int64 VideoId = 2;
   // @gotags:json:"action_type" form:"action_type" uri:"action_type"
-  int32 ActionType = 3;  //1-发布评论，2-删除评论
+  int64 ActionType = 3;  //1-发布评论，2-删除评论
   // @gotags:json:"comment_text" form:"comment_text" uri:"comment_text"
   string CommentText = 4; // 可选，用户填写的评论内容，在action_type=1的时候使用
   // @gotags:json:"comment_id" form:"comment_id" uri:"comment_id"
@@ -130,7 +130,7 @@ message CommentActionRequest {
 
 message CommentActionResponse {
   // @gotags:json:"status_code" form:"status_code" uri:"status_code"
-  int32 StatusCode = 1;
+  int64 StatusCode = 1;
   // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
   string StatusMsg = 2;
   // @gotags:json:"comment" form:"comment" uri:"comment"
@@ -145,11 +145,36 @@ message CommentListRequest {
 
 message CommentListResponse {
   // @gotags:json:"status_code" form:"status_code" uri:"status_code"
-  int32 StatusCode = 1;
+  int64 StatusCode = 1;
   // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
   string StatusMsg = 2;
   // @gotags:json:"comment_list" form:"comment_list" uri:"comment_list"
   repeated Comment CommentList = 3;
+}
+
+// 视频计数
+message Count {
+  // @gotags:json:"total_favorited" form:"total_favorited" uri:"total_favorited"
+  int64 TotalFavorited = 1;  // 获赞数量
+  // @gotags:json:"work_count" form:"work_count" uri:"work_count"
+  int64 WorkCount = 2;  // 作品数量
+  // @gotags:json:"favorite_count" form:"favorite_count" uri:"favorite_count"
+  int64 FavoriteCount = 3;  // 喜欢数量
+}
+
+// 视频总计数请求
+message CountRequest {
+  // @gotags:json:"user_id" form:"user_id" uri:"user_id"
+  repeated  int64 UserIds = 1;   // 传入一个userId切片
+}
+
+message CountResponse {
+  // @gotags:json:"status_code" form:"status_code" uri:"status_code"
+  int64 StatusCode = 1;
+  // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
+  string StatusMsg = 2;
+  // @gotags:json:"counts" form:"counts" uri:"counts"
+  repeated Count counts = 3;
 }
 
 service VideoService {
@@ -162,5 +187,8 @@ service VideoService {
 
   rpc CommentAction(CommentActionRequest) returns(CommentActionResponse);
   rpc CommentList(CommentListRequest) returns(CommentListResponse);
+
+  // 根据user_id切片，返回计数信息
+  rpc CountInfo(CountRequest) returns(CountResponse);
 }
 

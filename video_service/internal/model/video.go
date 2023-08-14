@@ -78,3 +78,25 @@ func (*VideoModel) DeleteCommentCount(videoId int64) error {
 	}
 	return nil
 }
+
+// GetFavoritedCount 获取用户的获赞数量
+func (*VideoModel) GetFavoritedCount(userId int64) (int64, error) {
+	var count int64
+
+	DB.Table("video").
+		Where("auth_id=?", userId).
+		Select("SUM(favorite_count) as count").
+		Pluck("count", &count)
+
+	return count, nil
+}
+
+// GetWorkCount 获取用户的作品数量
+func (*VideoModel) GetWorkCount(userId int64) (int64, error) {
+	var count int64
+	DB.Table("video").
+		Where("auth_id=?", userId).
+		Count(&count)
+
+	return count, nil
+}

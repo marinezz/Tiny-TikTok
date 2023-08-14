@@ -145,3 +145,27 @@ func (*VideoService) CommentAction(ctx context.Context, req *service.CommentActi
 
 	return resp, nil
 }
+
+// CountInfo 计数信息
+func (*VideoService) CountInfo(ctx context.Context, req *service.CountRequest) (resp *service.CountResponse, err error) {
+	resp = new(service.CountResponse)
+
+	userIds := req.UserIds
+
+	for _, userId := range userIds {
+		var count service.Count
+		// 获取赞的数量
+		count.TotalFavorited, _ = model.GetVideoInstance().GetFavoritedCount(userId)
+		// 获取作品数量
+		count.WorkCount, _ = model.GetVideoInstance().GetWorkCount(userId)
+		// 获取喜欢数量
+		count.FavoriteCount, _ = model.GetFavoriteInstance().GetFavoriteCount(userId)
+
+		resp.Counts = append(resp.Counts, &count)
+	}
+
+	resp.StatusCode = exception.SUCCESS
+	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
+
+	return resp, nil
+}
