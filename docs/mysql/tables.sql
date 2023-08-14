@@ -16,7 +16,17 @@ CREATE TABLE `user` (
 /*
  视频表
  */
-
+CREATE TABLE `video` (
+     `id` bigint NOT NULL AUTO_INCREMENT,
+     `auth_id` bigint DEFAULT NULL,
+     `title` varchar(256) DEFAULT NULL,
+     `cover_url` varchar(256) DEFAULT NULL,
+     `play_url` varchar(256) DEFAULT NULL,
+     `favorite_count` bigint DEFAULT '0',
+     `comment_count` bigint DEFAULT '0',
+     `creat_at` datetime DEFAULT NULL,
+     PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2276964627783681 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
 
  /*
@@ -27,14 +37,26 @@ CREATE TABLE `user` (
 /*
  评论表
  */
-
-
+CREATE TABLE `comment` (
+   `id` bigint NOT NULL AUTO_INCREMENT,
+   `user_id` bigint DEFAULT NULL,
+   `video_id` bigint DEFAULT NULL,
+   `creat_at` datetime DEFAULT NULL,
+   `comment_status` tinyint(1) DEFAULT NULL,
+   PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
 
 /*
  点赞表
  */
-
+CREATE TABLE `favorite` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `user_id` bigint DEFAULT NULL,
+    `video_id` bigint DEFAULT NULL,
+    `is_favorite` tinyint(1) DEFAULT NULL,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2277278458191873 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
 
 /*
