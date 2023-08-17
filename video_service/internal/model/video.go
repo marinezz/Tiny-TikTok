@@ -13,8 +13,8 @@ type Video struct {
 	Title         string
 	CoverUrl      string `gorm:"default:(-)"`
 	PlayUrl       string `gorm:"default:(-)"`
-	FavoriteCount int    `gorm:"default:0"`
-	CommentCount  int    `gorm:"default:0"`
+	FavoriteCount int64  `gorm:"default:0"`
+	CommentCount  int64  `gorm:"default:0"`
 	CreatAt       time.Time
 }
 
@@ -38,43 +38,120 @@ func (*VideoModel) Create(video *Video) error {
 	// 服务2
 	flake, _ := snowFlake.NewSnowFlake(7, 2)
 	video.Id = flake.NextId()
+
 	DB.Create(&video)
+
 	return nil
+}
+
+// GetVideoByTime 根据创建时间获取视频
+func (*VideoModel) GetVideoByTime(timePoint time.Time) ([]Video, error) {
+	var videos []Video
+
+	result := DB.Table("video").
+		Where("creat_at < ?", timePoint).
+		Order("creat_at DESC").
+		Limit(30).
+		Find(&videos)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return videos, nil
+}
+
+// GetVideoList 根据视频Id获取视频列表
+func (*VideoModel) GetVideoList(videoIds []int64) ([]Video, error) {
+	var videos []Video
+
+	result := DB.Table("video").
+		Where("id IN ?", videoIds).
+		Find(&videos)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return videos, nil
+}
+
+// GetVideoListByUser 根据用户的id找到视频列表
+func (*VideoModel) GetVideoListByUser(userId int64) ([]Video, error) {
+	var videos []Video
+
+	result := DB.Table("video").
+		Where("auth_id = ?", userId).
+		Find(&videos)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return videos, nil
 }
 
 // AddFavoriteCount 喜欢记录 + 1
 func (*VideoModel) AddFavoriteCount(videoId int64) error {
-	result := DB.Model(&Video{}).Where("id = ?", videoId).Update("favorite_count", gorm.Expr("favorite_count + ?", 1))
+	result := DB.Model(&Video{}).Where("id = ?", videoId).
+		Update("favorite_count", gorm.Expr("favorite_count + ?", 1))
 	if result.Error != nil {
 		return result.Error
 	}
+
 	return nil
 }
 
 // DeleteFavoriteCount 喜欢记录 - 1
 func (*VideoModel) DeleteFavoriteCount(videoId int64) error {
-	result := DB.Model(&Video{}).Where("id = ?", videoId).Update("favorite_count", gorm.Expr("favorite_count - ?", 1))
+	result := DB.Model(&Video{}).Where("id = ?", videoId).
+		Update("favorite_count", gorm.Expr("favorite_count - ?", 1))
 	if result.Error != nil {
 		return result.Error
 	}
-	return nil
+
 	return nil
 }
 
 // AddCommentCount 视频评论数量 + 1
 func (*VideoModel) AddCommentCount(videoId int64) error {
-	result := DB.Model(&Video{}).Where("id = ?", videoId).Update("comment_count", gorm.Expr("comment_count + ?", 1))
+	result := DB.Model(&Video{}).
+		Where("id = ?", videoId).
+		Update("comment_count", gorm.Expr("comment_count + ?", 1))
 	if result.Error != nil {
 		return result.Error
 	}
+
 	return nil
 }
 
 // DeleteCommentCount 视频评论数量 - 1
 func (*VideoModel) DeleteCommentCount(videoId int64) error {
-	result := DB.Model(&Video{}).Where("id = ?", videoId).Update("comment_count", gorm.Expr("comment_count - ?", 1))
+	result := DB.Model(&Video{}).
+		Where("id = ?", videoId).
+		Update("comment_count", gorm.Expr("comment_count - ?", 1))
 	if result.Error != nil {
 		return result.Error
 	}
+
 	return nil
+}
+
+// GetFavoritedCount 获取用户的获赞数量
+func (*VideoModel) GetFavoritedCount(userId int64) (int64, error) {
+	var count int64
+
+	DB.Table("video").
+		Where("auth_id=?", userId).
+		Select("SUM(favorite_count) as count").
+		Pluck("count", &count)
+
+	return count, nil
+}
+
+// GetWorkCount 获取用户的作品数量
+func (*VideoModel) GetWorkCount(userId int64) (int64, error) {
+	var count int64
+	DB.Table("video").
+		Where("auth_id=?", userId).
+		Count(&count)
+
+	return count, nil
 }

@@ -61,3 +61,46 @@ func TestTime(t *testing.T) {
 	timeString := currentTime.Format("2006-01-02 15:04:05")
 	fmt.Println("Formatted time:", timeString)
 }
+
+// 测试用户获赞数量
+func TestVideoModel_GetFavoritedCount(t *testing.T) {
+	InitDb()
+	count, _ := GetVideoInstance().GetFavoritedCount(812575311663104)
+	fmt.Println(count)
+}
+
+// 统计作品数量
+func TestVideoModel_GetWorkCount(t *testing.T) {
+	InitDb()
+	count, _ := GetVideoInstance().GetWorkCount(812575311663104)
+	fmt.Println(count)
+}
+
+// 统计喜欢数量
+func TestFavorite_GetFavoriteCount(t *testing.T) {
+	InitDb()
+	count, _ := GetFavoriteInstance().GetFavoriteCount(812575311663104)
+	fmt.Println(count)
+}
+
+// 找到喜欢的视频id
+func TestFavoriteModel_FavoriteVideoList(t *testing.T) {
+	InitDb()
+	list, _ := GetFavoriteInstance().FavoriteVideoList(812575311663104)
+
+	videoList, _ := GetVideoInstance().GetVideoList(list)
+	fmt.Print(list)
+	fmt.Print(videoList)
+}
+
+func TestFavoriteModel_IsFavorite(t *testing.T) {
+	InitDb()
+	favorite, _ := GetFavoriteInstance().IsFavorite(812575311663104, 2276964627783680)
+	fmt.Print(favorite)
+}
+
+func TestVideoModel_GetVideoByTime(t *testing.T) {
+	InitDb()
+	videos, _ := GetVideoInstance().GetVideoByTime(time.Now())
+	fmt.Print(videos)
+}

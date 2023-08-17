@@ -21,9 +21,9 @@ func CommentAction(ctx *gin.Context) {
 
 	actionType := ctx.PostForm("action_type")
 	actionTypeValue, _ := strconv.Atoi(actionType)
-	commentActionReq.ActionType = int32(actionTypeValue)
+	commentActionReq.ActionType = int64(actionTypeValue)
 
-	// 创建评论操作
+	// 评论操作
 	if commentActionReq.ActionType == 1 {
 		commentActionReq.CommentText = ctx.PostForm("comment_text")
 	} else {
@@ -34,17 +34,81 @@ func CommentAction(ctx *gin.Context) {
 	videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
 	videoServiceResp, _ := videoServiceClient.CommentAction(context.Background(), &commentActionReq)
 
-	// todo 这里太复杂了，找找能直接序列化不
-	var comment res.Comment
-	comment.ID = videoServiceResp.Comment.Id
-	comment.CreateDate = videoServiceResp.Comment.CreateDate
-	comment.Content = videoServiceResp.Comment.Content
+	// 如果是删除评论的操作
+	if actionTypeValue == 2 {
+		r := res.CommentActionResponse{
+			StatusCode: videoServiceResp.StatusCode,
+			StatusMsg:  videoServiceResp.StatusMsg,
+			//Comment:    nil,
+		}
+
+		ctx.JSON(http.StatusOK, r)
+	}
+
+	// 构建用户信息
+	userIds := []int64{userId.(int64)}
+	userInfos := GetUserInfo(userIds, ctx)
 
 	r := res.CommentActionResponse{
 		StatusCode: videoServiceResp.StatusCode,
 		StatusMsg:  videoServiceResp.StatusMsg,
-		Comment:    &comment,
+		Comment:    BuildComment(videoServiceResp.Comment, userInfos[0]),
 	}
 
 	ctx.JSON(http.StatusOK, r)
+}
+
+func CommentList(ctx *gin.Context) {
+	var commentListReq service.CommentListRequest
+
+	videoIdStr := ctx.Query("video_id")
+	videoId, _ := strconv.ParseInt(videoIdStr, 10, 64)
+
+	commentListReq.VideoId = videoId
+
+	videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
+	commentListResp, _ := videoServiceClient.CommentList(context.Background(), &commentListReq)
+
+	// 找到所有的用户Id
+	var userIds []int64
+	for _, comment := range commentListResp.CommentList {
+		userIds = append(userIds, comment.UserId)
+	}
+
+	userInfos := GetUserInfo(userIds, ctx)
+
+	commentList := BuildCommentList(commentListResp.CommentList, userInfos)
+
+	r := res.CommentListResponse{
+		StatusCode: commentListResp.StatusCode,
+		StatusMsg:  commentListResp.StatusMsg,
+		Comments:   commentList,
+	}
+
+	ctx.JSON(http.StatusOK, r)
+}
+
+func BuildComment(comment *service.Comment, userInfo res.User) res.Comment {
+
+	return res.Comment{
+		Id:         comment.Id,
+		User:       userInfo,
+		Content:    comment.Content,
+		CreateDate: comment.CreateDate,
+	}
+}
+
+func BuildCommentList(comments []*service.Comment, userInfos []res.User) []res.Comment {
+	var commentList []res.Comment
+
+	for i, comment := range comments {
+		commentList = append(commentList, res.Comment{
+			Id:         comment.Id,
+			User:       userInfos[i],
+			Content:    comment.Content,
+			CreateDate: comment.CreateDate,
+		})
+	}
+
+	return commentList
 }

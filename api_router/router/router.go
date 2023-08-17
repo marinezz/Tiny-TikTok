@@ -21,7 +21,7 @@ func InitRouter(serveInstance map[string]interface{}) *gin.Engine {
 	baseGroup := r.Group("/douyin")
 	{
 		// 视频流
-		baseGroup.GET("/feed")
+		baseGroup.GET("/feed", handler.Feed)
 
 		// 用户
 		baseGroup.POST("/user/register", handler.UserRegister)
@@ -39,13 +39,13 @@ func InitRouter(serveInstance map[string]interface{}) *gin.Engine {
 		favoriteGroup.Use(middleware.JWTMiddleware())
 		{
 			favoriteGroup.POST("action", handler.FavoriteAction)
-			favoriteGroup.GET("list")
+			favoriteGroup.GET("list", handler.FavoriteList)
 		}
 		commentGroup := baseGroup.Group("/comment")
 		commentGroup.Use(middleware.JWTMiddleware())
 		{
 			commentGroup.POST("/action", handler.CommentAction)
-			commentGroup.GET("/list")
+			commentGroup.GET("/list", handler.CommentList)
 		}
 		// 社交
 		relationGroup := baseGroup.Group("/relation")

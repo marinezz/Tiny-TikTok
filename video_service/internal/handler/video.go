@@ -3,8 +3,6 @@ package handler
 import (
 	"context"
 	"github.com/google/uuid"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"log"
 	"time"
 	"utils/exception"
@@ -22,11 +20,37 @@ func NewVideoService() *VideoService {
 	return &VideoService{}
 }
 
+// Feed 视频流
 func (*VideoService) Feed(ctx context.Context, req *service.FeedRequest) (resp *service.FeedResponse, err error) {
+	resp = new(service.FeedResponse)
 
-	return nil, status.Errorf(codes.Unimplemented, "method Feed not implemented")
+	// 获取时间
+	timePoint := time.Unix(req.LatestTime, 0)
+	if timePoint.IsZero() {
+		timePoint = time.Now()
+	}
+
+	// 根据时间获取视频
+	videos, _ := model.GetVideoInstance().GetVideoByTime(timePoint)
+
+	if req.UserId == -1 {
+		// 用户没有登录
+		resp.VideoList = BuildVideoForFavorite(videos, false)
+	} else {
+		resp.VideoList = BuildVideo(videos, req.UserId)
+	}
+
+	// 获取列表中最早发布视频的时间作为下一次请求的时间
+	LastIndex := len(videos) - 1
+	resp.NextTime = videos[LastIndex].CreatAt.Unix()
+
+	resp.StatusCode = exception.SUCCESS
+	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
+
+	return resp, nil
 }
 
+// PublishAction 发布视频
 func (*VideoService) PublishAction(ctx context.Context, req *service.PublishActionRequest) (resp *service.PublishActionResponse, err error) {
 	resp = new(service.PublishActionResponse)
 
@@ -71,27 +95,36 @@ func (*VideoService) PublishAction(ctx context.Context, req *service.PublishActi
 	return resp, nil
 }
 
-func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteActionRequest) (resp *service.FavoriteActionResponse, err error) {
-	resp = new(service.FavoriteActionResponse)
+// PublishList 发布列表
+func (*VideoService) PublishList(ctx context.Context, req *service.PublishListRequest) (resp *service.PublishListResponse, err error) {
+	resp = new(service.PublishListResponse)
 
-	action := req.ActionType
-	var favorite model.Favorite
-	favorite.UserId = req.UserId
-	favorite.VideoId = req.VideoId
-	// 点赞操作
-	if action == 1 {
-		// 操作favorite表
-		model.GetFavoriteInstance().AddFavorite(&favorite)
-		// 操作video表，喜欢记录 + 1
-		model.GetVideoInstance().AddFavoriteCount(req.VideoId)
-	}
+	// 根据用户id找到所有的视频
+	videos, _ := model.GetVideoInstance().GetVideoListByUser(req.UserId)
 
-	// 取消赞操作
-	if action == 2 {
-		// 操作favorite表
-		model.GetFavoriteInstance().DeleteFavorite(&favorite)
-		// 操作video表
-		model.GetVideoInstance().DeleteFavoriteCount(req.VideoId)
+	resp.StatusCode = exception.SUCCESS
+	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
+	resp.VideoList = BuildVideo(videos, req.UserId)
+
+	return resp, nil
+}
+
+// CountInfo 计数信息
+func (*VideoService) CountInfo(ctx context.Context, req *service.CountRequest) (resp *service.CountResponse, err error) {
+	resp = new(service.CountResponse)
+
+	userIds := req.UserIds
+
+	for _, userId := range userIds {
+		var count service.Count
+		// 获取赞的数量
+		count.TotalFavorited, _ = model.GetVideoInstance().GetFavoritedCount(userId)
+		// 获取作品数量
+		count.WorkCount, _ = model.GetVideoInstance().GetWorkCount(userId)
+		// 获取喜欢数量
+		count.FavoriteCount, _ = model.GetFavoriteInstance().GetFavoriteCount(userId)
+
+		resp.Counts = append(resp.Counts, &count)
 	}
 
 	resp.StatusCode = exception.SUCCESS
@@ -100,48 +133,43 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 	return resp, nil
 }
 
-func (*VideoService) CommentAction(ctx context.Context, req *service.CommentActionRequest) (resp *service.CommentActionResponse, err error) {
-	resp = new(service.CommentActionResponse)
-	comment := model.Comment{
-		UserId:  req.UserId,
-		VideoId: req.VideoId,
-		Content: req.CommentText,
-	}
-	action := req.ActionType
+func BuildVideo(videos []model.Video, userId int64) []*service.Video {
+	var videoResp []*service.Video
 
-	time := time.Now()
+	for _, video := range videos {
+		// 获取is_favorite的状态
+		isFavorite, _ := model.GetFavoriteInstance().IsFavorite(userId, video.Id)
 
-	// 发布评论
-	if action == 1 {
-		comment.CreatAt = time
-		id, _ := model.GetCommentInstance().CreateComment(&comment)
-
-		// 视频评论数量 + 1
-		model.GetVideoInstance().AddCommentCount(req.VideoId)
-
-		commentResp := &service.Comment{
-			Id:      id,
-			Content: req.CommentText,
-			// 将Time.time转换成字符串形式
-			CreateDate: time.Format("2006-01-02 15:04:05"),
-		}
-
-		// 将评论返回
-		resp.StatusCode = exception.SUCCESS
-		resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
-		resp.Comment = commentResp
-
-		return resp, nil
+		videoResp = append(videoResp, &service.Video{
+			Id:            video.Id,
+			AuthId:        video.AuthId,
+			PlayUrl:       video.PlayUrl,
+			CoverUrl:      video.CoverUrl,
+			FavoriteCount: video.FavoriteCount,
+			CommentCount:  video.CommentCount,
+			IsFavorite:    isFavorite,
+			Title:         video.Title,
+		})
 	}
 
-	// 删除评论
-	model.GetCommentInstance().DeleteComment(req.CommentId)
-	// 视频评论数量 - 1
-	model.GetVideoInstance().DeleteCommentCount(req.VideoId)
+	return videoResp
+}
 
-	resp.StatusCode = exception.SUCCESS
-	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
-	resp.Comment = nil
+func BuildVideoForFavorite(videos []model.Video, isFavorite bool) []*service.Video {
+	var videoResp []*service.Video
 
-	return resp, nil
+	for _, video := range videos {
+		videoResp = append(videoResp, &service.Video{
+			Id:            video.Id,
+			AuthId:        video.AuthId,
+			PlayUrl:       video.PlayUrl,
+			CoverUrl:      video.CoverUrl,
+			FavoriteCount: video.FavoriteCount,
+			CommentCount:  video.CommentCount,
+			IsFavorite:    isFavorite,
+			Title:         video.Title,
+		})
+	}
+
+	return videoResp
 }

@@ -16,7 +16,7 @@ message UserRequest{
 
 message UserResponse{
   // @gotags:json:"status_code" form:"status_code" uri:"status_code"
-  int32  StatusCode = 1;
+  int64  StatusCode = 1;
   // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
   string StatusMsg = 2;
   // @gotags:json:"user_id" form:"user_id" uri:"user_id"
@@ -37,17 +37,17 @@ message User {
 }
 
 message UserInfoRequest {
-  // @gotags:json:"user_id" form:"user_id" uri:"user_id"
-  int64 UserId = 1;
+  // @gotags:json:"user_ids" form:"user_ids" uri:"user_ids"
+  repeated  int64 UserIds = 1;   // 传入一个userId切片
 }
 
 message UserInfoResponse {
   // @gotags:json:"status_code" form:"status_code" uri:"status_code"
-  int32  StatusCode = 1;
+  int64  StatusCode = 1;
   // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
   string StatusMsg = 2;
-  // @gotags:json:"user" form:"user" uri:"user"
-  User User = 3;  // 用户信息
+  // @gotags:json:"users" form:"users" uri:"users"
+  repeated User Users = 3;  // 用户信息
 }
 
 

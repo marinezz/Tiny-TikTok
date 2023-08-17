@@ -11,7 +11,7 @@ type Favorite struct {
 	Id         int64 `gorm:"primaryKey"`
 	UserId     int64
 	VideoId    int64
-	IsFavorite bool `gorm:"default:(-)"`
+	IsFavorite bool `gorm:"default:true"`
 }
 
 type FavoriteModel struct {
@@ -55,6 +55,20 @@ func (*FavoriteModel) AddFavorite(favorite *Favorite) error {
 	return nil
 }
 
+// IsFavorite 根据用户id和视频id获取点赞状态
+func (*FavoriteModel) IsFavorite(userId int64, videoId int64) (bool, error) {
+	var isFavorite bool
+
+	result := DB.Table("favorite").
+		Where("user_id = ? AND video_id = ?", userId, videoId).
+		Pluck("is_favorite", &isFavorite)
+	if result.Error != nil {
+		return true, result.Error
+	}
+
+	return isFavorite, nil
+}
+
 // DeleteFavorite 删除点赞
 func (*FavoriteModel) DeleteFavorite(favorite *Favorite) error {
 	result := DB.Where("user_id=? AND video_id=?", favorite.UserId, favorite.VideoId).First(&favorite)
@@ -73,4 +87,29 @@ func (*FavoriteModel) DeleteFavorite(favorite *Favorite) error {
 	}
 
 	return nil
+}
+
+// FavoriteVideoList 根据用户Id获取所有喜欢的视频id
+func (*FavoriteModel) FavoriteVideoList(userId int64) ([]int64, error) {
+	var videoIds []int64
+
+	result := DB.Table("favorite").
+		Where("user_id = ? AND is_favorite = ?", userId, true).
+		Pluck("video_id", &videoIds)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return videoIds, nil
+}
+
+// GetFavoriteCount 获取喜欢数量
+func (*FavoriteModel) GetFavoriteCount(userId int64) (int64, error) {
+	var count int64
+
+	DB.Table("favorite").
+		Where("user_id=? AND is_favorite=?", userId, true).
+		Count(&count)
+
+	return count, nil
 }

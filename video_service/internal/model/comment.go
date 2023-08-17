@@ -60,3 +60,17 @@ func (*CommentModel) DeleteComment(commentId int64) error {
 	}
 	return nil
 }
+
+// CommentList 根据视频id找到所有的评论
+func (*CommentModel) CommentList(videoId int64) ([]Comment, error) {
+	var comments []Comment
+
+	result := DB.Table("comment").
+		Where("video_id = ?", videoId).
+		Find(&comments)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return comments, nil
+}
