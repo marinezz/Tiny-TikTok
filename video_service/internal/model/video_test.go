@@ -82,3 +82,13 @@ func TestFavorite_GetFavoriteCount(t *testing.T) {
 	count, _ := GetFavoriteInstance().GetFavoriteCount(812575311663104)
 	fmt.Println(count)
 }
+
+// 找到喜欢的视频id
+func TestFavoriteModel_FavoriteVideoList(t *testing.T) {
+	InitDb()
+	list, _ := GetFavoriteInstance().FavoriteVideoList(812575311663104)
+
+	videoList, _ := GetVideoInstance().GetVideoList(list)
+	fmt.Print(list)
+	fmt.Print(videoList)
+}

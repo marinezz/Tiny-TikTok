@@ -6,18 +6,20 @@ option go_package = "../;service";  // 此处格式为<生成的文件存放位�
 message Video {
   // @gotags:json:"id" form:"id" uri:"id"
   int64 Id = 1;
+  // @gotags:json:"auth_id" form:"auth_id" uri:"auth_id"
+  int64 AuthId = 2;
   // @gotags:json:"play_url" form:"play_rul" uri:"play_url"
-  string PlayUrl = 2;  // 视频播放地址
+  string PlayUrl = 3;  // 视频播放地址
   // @gotasgs:json:"cover_url" form:"cover_url" uri:"cover_url"
-  string CoverUrl = 3;
+  string CoverUrl = 4;
   // @gotags:json:"favorite_count" form:"favorite_count" uri:"favorite_count"
-  int64 FavoriteCount = 4;
+  int64 FavoriteCount = 5;
   // @gotags:json:"comment_count" form:"comment_count" uri:"comment_count"
-  int64 CommentCount = 5;
+  int64 CommentCount = 6;
   // @gotags:json:"is_favorite" form:"is_favorite" uri:"is_favorite"
-  bool IsFavorite = 6;
+  bool IsFavorite = 7;
   // @gotags:json:"title" form:"title" uri:"title"
-  string Title = 7;
+  string Title = 8;
 }
 
 message Comment {

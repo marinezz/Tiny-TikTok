@@ -39,7 +39,7 @@ func InitRouter(serveInstance map[string]interface{}) *gin.Engine {
 		favoriteGroup.Use(middleware.JWTMiddleware())
 		{
 			favoriteGroup.POST("action", handler.FavoriteAction)
-			favoriteGroup.GET("list")
+			favoriteGroup.GET("list", handler.FavoriteList)
 		}
 		commentGroup := baseGroup.Group("/comment")
 		commentGroup.Use(middleware.JWTMiddleware())

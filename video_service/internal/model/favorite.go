@@ -11,7 +11,7 @@ type Favorite struct {
 	Id         int64 `gorm:"primaryKey"`
 	UserId     int64
 	VideoId    int64
-	IsFavorite bool `gorm:"default:(-)"`
+	IsFavorite bool `gorm:"default:true"`
 }
 
 type FavoriteModel struct {
@@ -73,6 +73,20 @@ func (*FavoriteModel) DeleteFavorite(favorite *Favorite) error {
 	}
 
 	return nil
+}
+
+// FavoriteVideoList 根据用户Id获取所有喜欢的视频id
+func (*FavoriteModel) FavoriteVideoList(userId int64) ([]int64, error) {
+	var videoIds []int64
+
+	result := DB.Table("favorite").
+		Where("user_id = ? AND is_favorite = ?", userId, true).
+		Pluck("video_id", &videoIds)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return videoIds, nil
 }
 
 // GetFavoriteCount 获取喜欢数量

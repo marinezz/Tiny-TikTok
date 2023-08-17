@@ -11,6 +11,7 @@ import (
 	"net/http"
 )
 
+// PublishAction 发布视频
 func PublishAction(ctx *gin.Context) {
 	var publishActionReq service.PublishActionRequest
 
@@ -42,6 +43,7 @@ func PublishAction(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, r)
 }
 
+// PublishList 发布列表
 func PublishList(ctx *gin.Context) {
 	token := ctx.Query("token")
 	ctx.JSON(http.StatusOK, gin.H{
@@ -49,6 +51,28 @@ func PublishList(ctx *gin.Context) {
 	})
 }
 
+// BuildVideoList 构建视频列表
+func BuildVideoList(videos []*service.Video, userInfos []res.User) []res.Video {
+
+	var videoList []res.Video
+
+	for i, video := range videos {
+		videoList = append(videoList, res.Video{
+			Id:            video.Id,
+			Author:        userInfos[i],
+			PlayUrl:       video.PlayUrl,
+			CoverUrl:      video.CoverUrl,
+			FavoriteCount: video.FavoriteCount,
+			CommentCount:  video.CommentCount,
+			IsFavorite:    video.IsFavorite,
+			Title:         video.Title,
+		})
+	}
+
+	return videoList
+}
+
+// PanicIfPublishError 错误处理
 func PanicIfPublishError(err error) {
 	if err != nil {
 		err = errors.New("publishService--error--" + err.Error())
