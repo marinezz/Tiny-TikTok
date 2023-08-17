@@ -2,8 +2,6 @@ package handler
 
 import (
 	"context"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"time"
 	"utils/exception"
 	"video/internal/model"
@@ -59,6 +57,29 @@ func (*VideoService) CommentAction(ctx context.Context, req *service.CommentActi
 
 // CommentList 评论列表
 func (*VideoService) CommentList(ctx context.Context, req *service.CommentListRequest) (resp *service.CommentListResponse, err error) {
+	resp = new(service.CommentListResponse)
 
-	return nil, status.Errorf(codes.Unimplemented, "method CommentList not implemented")
+	// 根据视频id找到所有的评论
+	comments, _ := model.GetCommentInstance().CommentList(req.VideoId)
+
+	resp.StatusCode = exception.SUCCESS
+	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
+	resp.CommentList = BuildComments(comments)
+
+	return resp, nil
+}
+
+func BuildComments(comments []model.Comment) []*service.Comment {
+	var commentresp []*service.Comment
+
+	for _, comment := range comments {
+		commentresp = append(commentresp, &service.Comment{
+			Id:         comment.Id,
+			UserId:     comment.UserId,
+			Content:    comment.Content,
+			CreateDate: comment.CreatAt.Format("2006-01-02 15:04:05"),
+		})
+	}
+
+	return commentresp
 }

@@ -70,3 +70,9 @@ type CommentActionResponse struct {
 	StatusMsg  string  `json:"status_msg"`
 	Comment    Comment `json:"comment"` // 评论成功返回评论内容，不需要重新拉取整个列表
 }
+
+type CommentListResponse struct {
+	StatusCode int64     `json:"status_code"`
+	StatusMsg  string    `json:"status_msg"`
+	Comments   []Comment `json:"comment"`
+}

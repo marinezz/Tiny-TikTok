@@ -25,10 +25,12 @@ message Video {
 message Comment {
   // @gotags:json:"id" form:"id" uri:"id"
   int64 Id = 1;
+  // @gatags:json:"user_id" form:"user_id" uri:"user_id"
+  int64 UserId = 2;
   // @gotags:json:"content" form:"content" uri:"content"
-  string Content = 2;  // 评论内容
+  string Content = 3;  // 评论内容
   // @gotags:json:"create_date" form:"create_date" uri:"create_date"
-  string CreateDate = 3;
+  string CreateDate = 4;
 }
 
 // 视频流

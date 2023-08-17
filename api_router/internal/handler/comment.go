@@ -58,6 +58,36 @@ func CommentAction(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, r)
 }
 
+func CommentList(ctx *gin.Context) {
+	var commentListReq service.CommentListRequest
+
+	videoIdStr := ctx.Query("video_id")
+	videoId, _ := strconv.ParseInt(videoIdStr, 10, 64)
+
+	commentListReq.VideoId = videoId
+
+	videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
+	commentListResp, _ := videoServiceClient.CommentList(context.Background(), &commentListReq)
+
+	// 找到所有的用户Id
+	var userIds []int64
+	for _, comment := range commentListResp.CommentList {
+		userIds = append(userIds, comment.UserId)
+	}
+
+	userInfos := GetUserInfo(userIds, ctx)
+
+	commentList := BuildCommentList(commentListResp.CommentList, userInfos)
+
+	r := res.CommentListResponse{
+		StatusCode: commentListResp.StatusCode,
+		StatusMsg:  commentListResp.StatusMsg,
+		Comments:   commentList,
+	}
+
+	ctx.JSON(http.StatusOK, r)
+}
+
 func BuildComment(comment *service.Comment, userInfo res.User) res.Comment {
 
 	return res.Comment{
@@ -66,4 +96,19 @@ func BuildComment(comment *service.Comment, userInfo res.User) res.Comment {
 		Content:    comment.Content,
 		CreateDate: comment.CreateDate,
 	}
+}
+
+func BuildCommentList(comments []*service.Comment, userInfos []res.User) []res.Comment {
+	var commentList []res.Comment
+
+	for i, comment := range comments {
+		commentList = append(commentList, res.Comment{
+			Id:         comment.Id,
+			User:       userInfos[i],
+			Content:    comment.Content,
+			CreateDate: comment.CreateDate,
+		})
+	}
+
+	return commentList
 }

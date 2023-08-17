@@ -45,7 +45,7 @@ func InitRouter(serveInstance map[string]interface{}) *gin.Engine {
 		commentGroup.Use(middleware.JWTMiddleware())
 		{
 			commentGroup.POST("/action", handler.CommentAction)
-			commentGroup.GET("/list")
+			commentGroup.GET("/list", handler.CommentList)
 		}
 		// 社交
 		relationGroup := baseGroup.Group("/relation")
