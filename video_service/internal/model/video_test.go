@@ -92,3 +92,15 @@ func TestFavoriteModel_FavoriteVideoList(t *testing.T) {
 	fmt.Print(list)
 	fmt.Print(videoList)
 }
+
+func TestFavoriteModel_IsFavorite(t *testing.T) {
+	InitDb()
+	favorite, _ := GetFavoriteInstance().IsFavorite(812575311663104, 2276964627783680)
+	fmt.Print(favorite)
+}
+
+func TestVideoModel_GetVideoByTime(t *testing.T) {
+	InitDb()
+	videos, _ := GetVideoInstance().GetVideoByTime(time.Now())
+	fmt.Print(videos)
+}

@@ -55,6 +55,20 @@ func (*FavoriteModel) AddFavorite(favorite *Favorite) error {
 	return nil
 }
 
+// IsFavorite 根据用户id和视频id获取点赞状态
+func (*FavoriteModel) IsFavorite(userId int64, videoId int64) (bool, error) {
+	var isFavorite bool
+
+	result := DB.Table("favorite").
+		Where("user_id = ? AND video_id = ?", userId, videoId).
+		Pluck("is_favorite", &isFavorite)
+	if result.Error != nil {
+		return true, result.Error
+	}
+
+	return isFavorite, nil
+}
+
 // DeleteFavorite 删除点赞
 func (*FavoriteModel) DeleteFavorite(favorite *Favorite) error {
 	result := DB.Where("user_id=? AND video_id=?", favorite.UserId, favorite.VideoId).First(&favorite)

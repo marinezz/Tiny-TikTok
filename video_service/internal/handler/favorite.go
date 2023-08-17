@@ -50,7 +50,7 @@ func (*VideoService) FavoriteList(ctx context.Context, req *service.FavoriteList
 
 	resp.StatusCode = exception.SUCCESS
 	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
-	resp.VideoList = BuildVideoForFavorite(videos)
+	resp.VideoList = BuildVideoForFavorite(videos, true)
 
 	return resp, nil
 }

@@ -21,7 +21,7 @@ func InitRouter(serveInstance map[string]interface{}) *gin.Engine {
 	baseGroup := r.Group("/douyin")
 	{
 		// 视频流
-		baseGroup.GET("/feed")
+		baseGroup.GET("/feed", handler.Feed)
 
 		// 用户
 		baseGroup.POST("/user/register", handler.UserRegister)

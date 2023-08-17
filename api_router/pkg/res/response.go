@@ -36,6 +36,13 @@ type Video struct {
 	Title         string `json:"title"`
 }
 
+type FeedResponse struct {
+	StatusCode int64   `json:"status_code"`
+	NextTime   int64   `json:"next_time"`
+	StatusMsg  string  `json:"status_msg"`
+	VideoList  []Video `json:"video_list"`
+}
+
 type UserResponse struct {
 	StatusCode int64  `json:"status_code"`
 	StatusMsg  string `json:"status_msg,omitempty"`

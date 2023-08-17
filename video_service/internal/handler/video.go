@@ -3,8 +3,6 @@ package handler
 import (
 	"context"
 	"github.com/google/uuid"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"log"
 	"time"
 	"utils/exception"
@@ -24,8 +22,32 @@ func NewVideoService() *VideoService {
 
 // Feed 视频流
 func (*VideoService) Feed(ctx context.Context, req *service.FeedRequest) (resp *service.FeedResponse, err error) {
+	resp = new(service.FeedResponse)
 
-	return nil, status.Errorf(codes.Unimplemented, "method Feed not implemented")
+	// 获取时间
+	timePoint := time.Unix(req.LatestTime, 0)
+	if timePoint.IsZero() {
+		timePoint = time.Now()
+	}
+
+	// 根据时间获取视频
+	videos, _ := model.GetVideoInstance().GetVideoByTime(timePoint)
+
+	if req.UserId == -1 {
+		// 用户没有登录
+		resp.VideoList = BuildVideoForFavorite(videos, false)
+	} else {
+		resp.VideoList = BuildVideo(videos, req.UserId)
+	}
+
+	// 获取列表中最早发布视频的时间作为下一次请求的时间
+	LastIndex := len(videos) - 1
+	resp.NextTime = videos[LastIndex].CreatAt.Unix()
+
+	resp.StatusCode = exception.SUCCESS
+	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
+
+	return resp, nil
 }
 
 // PublishAction 发布视频
@@ -75,7 +97,16 @@ func (*VideoService) PublishAction(ctx context.Context, req *service.PublishActi
 
 // PublishList 发布列表
 func (*VideoService) PublishList(ctx context.Context, req *service.PublishListRequest) (resp *service.PublishListResponse, err error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PublishList not implemented")
+	resp = new(service.PublishListResponse)
+
+	// 根据用户id找到所有的视频
+	videos, _ := model.GetVideoInstance().GetVideoListByUser(req.UserId)
+
+	resp.StatusCode = exception.SUCCESS
+	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
+	resp.VideoList = BuildVideo(videos, req.UserId)
+
+	return resp, nil
 }
 
 // CountInfo 计数信息
@@ -102,7 +133,29 @@ func (*VideoService) CountInfo(ctx context.Context, req *service.CountRequest) (
 	return resp, nil
 }
 
-func BuildVideoForFavorite(videos []model.Video) []*service.Video {
+func BuildVideo(videos []model.Video, userId int64) []*service.Video {
+	var videoResp []*service.Video
+
+	for _, video := range videos {
+		// 获取is_favorite的状态
+		isFavorite, _ := model.GetFavoriteInstance().IsFavorite(userId, video.Id)
+
+		videoResp = append(videoResp, &service.Video{
+			Id:            video.Id,
+			AuthId:        video.AuthId,
+			PlayUrl:       video.PlayUrl,
+			CoverUrl:      video.CoverUrl,
+			FavoriteCount: video.FavoriteCount,
+			CommentCount:  video.CommentCount,
+			IsFavorite:    isFavorite,
+			Title:         video.Title,
+		})
+	}
+
+	return videoResp
+}
+
+func BuildVideoForFavorite(videos []model.Video, isFavorite bool) []*service.Video {
 	var videoResp []*service.Video
 
 	for _, video := range videos {
@@ -113,7 +166,7 @@ func BuildVideoForFavorite(videos []model.Video) []*service.Video {
 			CoverUrl:      video.CoverUrl,
 			FavoriteCount: video.FavoriteCount,
 			CommentCount:  video.CommentCount,
-			IsFavorite:    true,
+			IsFavorite:    isFavorite,
 			Title:         video.Title,
 		})
 	}
