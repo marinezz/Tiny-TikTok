@@ -15,7 +15,7 @@ Marine
 
 ### 2.1 技术选型与设计
 
-![img](https://v1rwxew1bdp.feishu.cn/space/api/box/stream/download/asynccode/?code=MmJlMjRhMzJjZDc0OGNjYTIyY2JhOGQzMGQ2YmM1OGRfT2NKdmZWYkVnalpxbHBmeUtCTE1HUnB3djY2SEtUYW5fVG9rZW46U2kxbGJQOVE3b0hOWnB4M1p4bWNJZ2pKbjliXzE2OTE3NTA4MTg6MTY5MTc1NDQxOF9WNA)
+![image-20230817120343728](D:\Project\go_projcet\Tiny_TikTok\Tiny-TikTok\README.assets\image-20230817120343728.png)
 
 * **Gin：**Web框架。高性能、轻量级、简洁，被广泛用于构建RESTful API、网站和其它HTTP服务
 
@@ -41,7 +41,7 @@ Marine
 
 ### 2.2 总体设计
 
-![img](https://v1rwxew1bdp.feishu.cn/space/api/box/stream/download/asynccode/?code=ZGE3ODFmZDU2YmNiM2VhMTdjZmQ1NWUxNDY1MzlkYWFfOFVQajI1WWJSeG4yalJ6UG1aSkpQYnhGVUdvVVk0TVdfVG9rZW46T1M0RmJFVFpob0lqUjR4cndvWmNKZTRPbjdiXzE2OTE3NTA4MzY6MTY5MTc1NDQzNl9WNA)
+![image-20230817120352065](D:\Project\go_projcet\Tiny_TikTok\Tiny-TikTok\README.assets\image-20230817120352065.png)
 
 * 请求到达服务器前会对token进行校验
 * 通过Api_Router对外暴露接口，进入服务，网关微服务对其它服务进行服务熔断和服务限流
@@ -123,7 +123,7 @@ Marine
 
 ### 2.4 数据库设计
 
-![img](https://v1rwxew1bdp.feishu.cn/space/api/box/stream/download/asynccode/?code=NjQ1NDIzMDQ3YTUwY2U0ZDllNzA5ODc5YjEyMTIyZDNfa0NKQlVCMEZkaWpNMWRJYVdsWEFONlVJb0JaeExLdTFfVG9rZW46VXRMVGI3Qjg1b1VKUjN4T3JNRWN3bkxIbjNrXzE2OTE3NTA4NDY6MTY5MTc1NDQ0Nl9WNA)
+![image-20230817120402701](D:\Project\go_projcet\Tiny_TikTok\Tiny-TikTok\README.assets\image-20230817120402701.png)
 
 **用户表：**用于存储用户名称、密码、头像、背景、用户简介信息，以由雪花算法生成的分布式id作为主键（其余表的ID同理），密码由bcrypt函数进行加密。
 
