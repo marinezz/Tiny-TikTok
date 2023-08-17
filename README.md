@@ -41,7 +41,7 @@ Marine
 
 ### 2.2 总体设计
 
-![image-20230817120352065](D:\Project\go_projcet\Tiny_TikTok\Tiny-TikTok\README.assets\image-20230817120352065.png)
+https://github.com/marinezz/Tiny-TikTok/blob/main/docs/image/%E6%8A%80%E6%9C%AF%E6%9E%B6%E6%9E%84%E5%9B%BE.png?raw=true
 
 * 请求到达服务器前会对token进行校验
 * 通过Api_Router对外暴露接口，进入服务，网关微服务对其它服务进行服务熔断和服务限流

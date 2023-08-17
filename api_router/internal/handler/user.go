@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+	"sync"
 )
 
 // UserRegister 用户注册
@@ -78,6 +79,49 @@ func UserInfo(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, r)
 
+}
+
+// GetUserInfo 根据用户id，去调取三个服务，拼接出所有的用户信息
+func GetUserInfo(userIds []int64, ctx *gin.Context) (userInfos []res.User) {
+	// 构建三个服务的请求
+	// todo 社交服务
+	var userInfoReq service.UserInfoRequest
+	var countInfoReq service.CountRequest
+
+	userInfoReq.UserIds = userIds
+	countInfoReq.UserIds = userIds
+
+	// 创建接收三个响应
+	var userResp *service.UserInfoResponse
+	var countInfoResp *service.CountResponse
+
+	// 分别去调用三个服务
+	var wg sync.WaitGroup
+	wg.Add(3)
+	go func() {
+		defer wg.Done()
+		userServiceClient := ctx.Keys["user_service"].(service.UserServiceClient)
+		userResp, _ = userServiceClient.UserInfo(context.Background(), &userInfoReq)
+	}()
+
+	go func() {
+		defer wg.Done()
+		videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
+		countInfoResp, _ = videoServiceClient.CountInfo(context.Background(), &countInfoReq)
+	}()
+
+	go func() {
+		defer wg.Done()
+		// todo 社交服务
+	}()
+	wg.Wait()
+
+	// 构建信息userResp.Users[0], countInfoResp.Counts[0])
+	for index, _ := range userIds {
+		userInfos = append(userInfos, BuildUser(userResp.Users[index], countInfoResp.Counts[index]))
+	}
+
+	return userInfos
 }
 
 // BuildUser 构建用户信息 Todo 还有其余信息的构建

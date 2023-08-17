@@ -12,13 +12,9 @@ import (
 // CommentAction 评论操作
 func CommentAction(ctx *gin.Context) {
 	var commentActionReq service.CommentActionRequest
-	var userInfoReq service.UserInfoRequest
-	var countInfoReq service.CountRequest
 
 	userId, _ := ctx.Get("user_id")
 	commentActionReq.UserId, _ = userId.(int64)
-	userInfoReq.UserIds = append(userInfoReq.UserIds, userId.(int64))
-	countInfoReq.UserIds = append(countInfoReq.UserIds, userId.(int64))
 
 	videoId := ctx.PostForm("video_id")
 	commentActionReq.VideoId, _ = strconv.ParseInt(videoId, 10, 64)
@@ -49,25 +45,24 @@ func CommentAction(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, r)
 	}
 
-	// 创建评论操作,查询用户信息
-	userServiceClient := ctx.Keys["user_service"].(service.UserServiceClient)
-	userResp, _ := userServiceClient.UserInfo(context.Background(), &userInfoReq)
-	// 查询点赞信息
-	countInfoResp, _ := videoServiceClient.CountInfo(context.Background(), &countInfoReq)
+	// 构建用户信息
+	userIds := []int64{userId.(int64)}
+	userInfos := GetUserInfo(userIds, ctx)
 
 	r := res.CommentActionResponse{
 		StatusCode: videoServiceResp.StatusCode,
 		StatusMsg:  videoServiceResp.StatusMsg,
-		Comment:    BuildComment(videoServiceResp.Comment, userResp.Users[0], countInfoResp.Counts[0]),
+		Comment:    BuildComment(videoServiceResp.Comment, userInfos[0]),
 	}
 
 	ctx.JSON(http.StatusOK, r)
 }
 
-func BuildComment(comment *service.Comment, user *service.User, count *service.Count) res.Comment {
+func BuildComment(comment *service.Comment, userInfo res.User) res.Comment {
+
 	return res.Comment{
 		Id:         comment.Id,
-		User:       BuildUser(user, count),
+		User:       userInfo,
 		Content:    comment.Content,
 		CreateDate: comment.CreateDate,
 	}
