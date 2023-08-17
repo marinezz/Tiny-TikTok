@@ -15,7 +15,7 @@ Marine
 
 ### 2.1 技术选型与设计
 
-![image-20230817120343728](D:\Project\go_projcet\Tiny_TikTok\Tiny-TikTok\README.assets\image-20230817120343728.png)
+[![image-20230817120343728](D:\Project\go_projcet\Tiny_TikTok\Tiny-TikTok\README.assets\image-20230817120343728.png)](https://github.com/marinezz/Tiny-TikTok/blob/main/docs/image/%E6%8A%80%E6%9C%AF%E6%9E%B6%E6%9E%84%E5%9B%BE.png?raw=true)
 
 * **Gin：**Web框架。高性能、轻量级、简洁，被广泛用于构建RESTful API、网站和其它HTTP服务
 
