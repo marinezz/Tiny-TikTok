@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"utils/exception"
 )
 
 // UserRegister 用户注册
@@ -33,6 +34,7 @@ func UserRegister(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, r)
 }
 
+// UserLogin 用户登录
 func UserLogin(ctx *gin.Context) {
 	var userReq service.UserRequest
 	ctx.Bind(&userReq)
@@ -56,29 +58,18 @@ func UserLogin(ctx *gin.Context) {
 
 // UserInfo 用户信息列表
 func UserInfo(ctx *gin.Context) {
-	var userInfoReq service.UserInfoRequest
-	var countInfoReq service.CountRequest
+	var userIds []int64
 
 	// jwt中间件会解析token，然后把user_id放入context中，所以用两种方式都可以获取到user_id
 	userIdStr := ctx.Query("user_id")
 	userId, _ := strconv.ParseInt(userIdStr, 10, 64)
-	userInfoReq.UserIds = append(userInfoReq.UserIds, userId)
-	countInfoReq.UserIds = append(countInfoReq.UserIds, userId)
-	//userId, _ := ctx.Get("user_id")
-	//userInfoReq.UserId, _ = userId.(int64)
 
-	userServiceClient := ctx.Keys["user_service"].(service.UserServiceClient)
-	userResp, _ := userServiceClient.UserInfo(context.Background(), &userInfoReq)
-
-	videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
-	countInfoResp, _ := videoServiceClient.CountInfo(context.Background(), &countInfoReq)
+	userIds = append(userIds, userId)
 
 	r := res.UserInfoResponse{
-		StatusCode: userResp.StatusCode,
-		StatusMsg:  userResp.StatusMsg,
-		User:       BuildUser(userResp.Users[0], countInfoResp.Counts[0], Follow{
-			// todo 这里调用下面接口
-		}),
+		StatusCode: exception.SUCCESS,
+		StatusMsg:  exception.GetMsg(exception.SUCCESS),
+		User:       GetUserInfo(userIds, ctx)[0],
 	}
 	ctx.JSON(http.StatusOK, r)
 
