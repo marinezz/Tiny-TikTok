@@ -1,0 +1,142 @@
+syntax="proto3";
+package pb;
+option go_package = "../;service";  // 此处格式为<生成的文件存放位置;生成文件的包名>
+
+//  protoc -I internal/service/pb --go_out=./internal/service/ --go_opt=paths=source_relative --go-grpc_out=./internal/service/ --go-grpc_opt=paths=source_relative internal/service/pb/*.proto
+//  或者分开使用
+//  protoc -I internal/service/pb/ --go_out=./ internal/service/pb/*.proto
+//  protoc -I internal/service/pb/ --go-grpc_out=./  internal/service/pb/*.proto
+
+message FollowRequest{
+  // @gotags:json:"user_id" form:"user_id" uri:"user_id"
+  int64 UserId = 1;
+  // @gotags:json:"to_user_id" form:"to_user_id" uri:"to_user_id"
+  int64 ToUserID = 2;
+  // @gotags:json:"action_type" form:"action_type" uri:"action_type"
+  int32 ActionType = 3;
+}
+
+message FollowResponse{
+  // @gotags:json:"status_code" form:"status_code" uri:"status_code"
+  int32  StatusCode = 1;
+  // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
+  string StatusMsg = 2;
+}
+
+message IsFollowRequest{
+  // @gotags:json:"user_id" form:"user_id" uri:"user_id"
+  int64 UserId = 1;
+  // @gotags:json:"to_user_id" form:"to_user_id" uri:"to_user_id"
+  int64 ToUserID = 2;
+}
+
+message IsFollowResponse{
+  // @gotags:json:"status_code" form:"status_code" uri:"status_code"
+  int32  StatusCode = 1;
+  // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
+  string StatusMsg = 2;
+  // @gotags:json:"is_follow" form:"is_follow" uri:"is_follow"
+  bool IsFollow = 3;
+}
+
+message FollowListRequest{
+  // @gotags:json:"user_id" form:"user_id" uri:"user_id"
+  int64 UserId = 1;
+}
+
+message FollowListResponse{
+  // @gotags:json:"status_code" form:"status_code" uri:"status_code"
+  int32  StatusCode = 1;
+  // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
+  string StatusMsg = 2;
+  // @gotags:json:"user_list" form:"user_list" uri:"user_list"
+  repeated int64 UserId = 3;
+}
+
+message FollowCountRequest{
+  // @gotags:json:"user_id" form:"user_id" uri:"user_id"
+  int64 UserId = 1;
+}
+
+message FollowCountResponse{
+  // @gotags:json:"status_code" form:"status_code" uri:"status_code"
+  int32  StatusCode = 1;
+  // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
+  string StatusMsg = 2;
+  // @gotags:json:"follow_count" form:"follow_count" uri:"follow_count"
+  int64 FollowCount = 3;
+}
+
+message FollowerCountResponse{
+  // @gotags:json:"status_code" form:"status_code" uri:"status_code"
+  int32  StatusCode = 1;
+  // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
+  string StatusMsg = 2;
+  // @gotags:json:"follower_count" form:"follower_count" uri:"follower_count"
+  int64 FollowerCount = 3;
+}
+
+message PostMessageRequest{
+  // @gotags:json:"user_id" form:"user_id" uri:"user_id"
+  int64 UserId = 1;
+  // @gotags:json:"to_user_id" form:"to_user_id" uri:"to_user_id"
+  int64 ToUserID = 2;
+  // @gotags:json:"action_type" form:"action_type" uri:"action_type"
+  int32 ActionType = 3;
+  // @gotags:json:"content" form:"content" uri:"content"
+  string Content = 4;
+}
+
+message PostMessageResponse{
+  // @gotags:json:"status_code" form:"status_code" uri:"status_code"
+  int32  StatusCode = 1;
+  // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
+  string StatusMsg = 2;
+}
+
+message GetMessageRequest{
+  // @gotags:json:"user_id" form:"user_id" uri:"user_id"
+  int64 UserId = 1;
+  // @gotags:json:"to_user_id" form:"to_user_id" uri:"to_user_id"
+  int64 ToUserID = 2;
+}
+
+message Message{
+  // @gotags:json:"id" form:"id" uri:"id"
+  int64 Id = 1;
+  // @gotags:json:"user_id" form:"user_id" uri:"user_id"
+  int64 UserId = 2;
+  // @gotags:json:"to_user_id" form:"to_user_id" uri:"to_user_id"
+  int64 ToUserID = 3;
+  // @gotags:json:"content" form:"content" uri:"content"
+  string Content = 4;
+  // @gotags:json:"created_at" form:"created_at" uri:"created_at"
+  string CreatedAt = 5;
+}
+
+message GetMessageResponse{
+  // @gotags:json:"status_code" form:"status_code" uri:"status_code"
+  int32  StatusCode = 1;
+  // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
+  string StatusMsg = 2;
+  // @gotags:json:"message_list" form:"message_list" uri:"message_list"
+  repeated Message message = 3;
+}
+
+service SocialService{
+  // 关注服务
+  rpc FollowAction(FollowRequest) returns(FollowResponse);
+  rpc IsFollow(IsFollowRequest) returns(IsFollowResponse);
+
+  rpc GetFollowList(FollowListRequest) returns(FollowListResponse);
+  rpc GetFollowerList(FollowListRequest) returns(FollowListResponse);
+  rpc GetFriendList(FollowListRequest) returns(FollowListResponse);
+
+  rpc GetFollowCount(FollowCountRequest) returns(FollowCountResponse);
+  rpc GetFollowerCount(FollowCountRequest) returns(FollowerCountResponse);
+
+  // 消息服务
+  rpc PostMessage(PostMessageRequest) returns(PostMessageResponse);
+  rpc GetMessage(GetMessageRequest) returns(GetMessageResponse);
+
+}

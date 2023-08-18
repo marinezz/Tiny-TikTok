@@ -1,0 +1,16 @@
+server:
+  name: social_service  # 服务名称
+  address: 127.0.0.1:10003  # 服务地址
+
+
+mysql:
+  driver: mysql
+  host: 127.0.0.1
+  port: 3306
+  username: root
+  password: 123456
+  database: tiny_tiktok
+
+
+etcd:
+  address: 127.0.0.1:2379
