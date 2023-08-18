@@ -90,9 +90,9 @@ type FollowActionResponse struct {
 }
 
 type FollowListResponse struct {
-	StatusCode int32   `json:"status_code"` // 状态码，0-成功，其他值-失败
-	StatusMsg  string  `json:"status_msg"`  // 返回状态描述
-	UserList   []int64 `json:"user_list"`
+	StatusCode int32  `json:"status_code"` // 状态码，0-成功，其他值-失败
+	StatusMsg  string `json:"status_msg"`  // 返回状态描述
+	UserList   []User `json:"user_list"`
 }
 
 type PostMessageResponse struct {
