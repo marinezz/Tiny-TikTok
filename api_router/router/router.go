@@ -11,7 +11,7 @@ import (
 func InitRouter(serveInstance map[string]interface{}) *gin.Engine {
 	r := gin.Default()
 
-	r.Use(middleware.ServeMiddleware(serveInstance))
+	r.Use(middleware.ServeMiddleware(serveInstance), middleware.ErrorMiddleWare())
 	// 测试
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
