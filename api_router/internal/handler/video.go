@@ -10,12 +10,13 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 )
 
+// Feed 视频流
 func Feed(ctx *gin.Context) {
 	var feedReq service.FeedRequest
 
+	// 判断是否带有参数
 	token, _ := ctx.Get("token")
 	if token == "" {
 		feedReq.UserId = -1
@@ -25,8 +26,12 @@ func Feed(ctx *gin.Context) {
 	}
 
 	latestTime := ctx.Query("latest_time")
-	timePoint, _ := time.Parse("2006-01-02 15:04:05", latestTime)
-	feedReq.LatestTime = timePoint.Unix()
+	if latestTime == "" {
+		feedReq.LatestTime = -1
+	} else {
+		timePoint, _ := strconv.ParseInt(latestTime, 10, 64)
+		feedReq.LatestTime = timePoint
+	}
 
 	videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
 	feedResp, _ := videoServiceClient.Feed(context.Background(), &feedReq)
