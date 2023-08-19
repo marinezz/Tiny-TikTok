@@ -18,17 +18,21 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 	// 点赞操作
 	if action == 1 {
 		// 操作favorite表
-		model.GetFavoriteInstance().AddFavorite(&favorite)
-		// 操作video表，喜欢记录 + 1  todo 视频表中数据会重复增加
-		model.GetVideoInstance().AddFavoriteCount(req.VideoId)
+		_, isAdd := model.GetFavoriteInstance().AddFavorite(&favorite)
+		// 操作video表，喜欢记录 + 1
+		if isAdd == true {
+			model.GetVideoInstance().AddFavoriteCount(req.VideoId)
+		}
 	}
 
 	// 取消赞操作
 	if action == 2 {
 		// 操作favorite表
-		model.GetFavoriteInstance().DeleteFavorite(&favorite)
+		_, isDelete := model.GetFavoriteInstance().DeleteFavorite(&favorite)
 		// 操作video表
-		model.GetVideoInstance().DeleteFavoriteCount(req.VideoId)
+		if isDelete == true {
+			model.GetVideoInstance().DeleteFavoriteCount(req.VideoId)
+		}
 	}
 
 	resp.StatusCode = exception.SUCCESS
