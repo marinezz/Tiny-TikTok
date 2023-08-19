@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+	"utils/exception"
 )
 
 // FavoriteAction 喜欢操作
@@ -21,17 +22,28 @@ func FavoriteAction(ctx *gin.Context) {
 	// string转int32
 	actionType := ctx.PostForm("action_type")
 	actionTypeValue, _ := strconv.Atoi(actionType)
-	favoriteActionReq.ActionType = int64(actionTypeValue)
 
-	videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
-	videoServiceResp, _ := videoServiceClient.FavoriteAction(context.Background(), &favoriteActionReq)
+	// 异常操作
+	if actionTypeValue == 1 || actionTypeValue == 2 {
+		favoriteActionReq.ActionType = int64(actionTypeValue)
 
-	r := res.FavoriteActionResponse{
-		StatusCode: videoServiceResp.StatusCode,
-		StatusMsg:  videoServiceResp.StatusMsg,
+		videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
+		videoServiceResp, _ := videoServiceClient.FavoriteAction(context.Background(), &favoriteActionReq)
+
+		r := res.FavoriteActionResponse{
+			StatusCode: videoServiceResp.StatusCode,
+			StatusMsg:  videoServiceResp.StatusMsg,
+		}
+
+		ctx.JSON(http.StatusOK, r)
+	} else {
+		r := res.FavoriteActionResponse{
+			StatusCode: exception.ErrOperate,
+			StatusMsg:  exception.GetMsg(exception.ErrOperate),
+		}
+
+		ctx.JSON(http.StatusOK, r)
 	}
-
-	ctx.JSON(http.StatusOK, r)
 }
 
 func FavoriteList(ctx *gin.Context) {

@@ -19,4 +19,6 @@ const (
 	UserExist     = 1100 // 数据库相关
 	UserUnExist   = 1101
 	PasswordError = 1102
+
+	ErrOperate = 1200 // 异常操作
 )

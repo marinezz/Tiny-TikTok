@@ -143,7 +143,7 @@ func GetUserInfo(userIds []int64, ctx *gin.Context) (userInfos []res.User) {
 	return userInfos
 }
 
-// BuildUser 构建用户信息 Todo 还有其余信息的构建
+// BuildUser 构建用户信息
 func BuildUser(user *service.User, count *service.Count, follow Follow) res.User {
 	return res.User{
 		Id:   user.Id,

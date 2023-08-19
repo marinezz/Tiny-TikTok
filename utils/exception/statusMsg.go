@@ -12,6 +12,8 @@ var Msg = map[int]string{
 	UserExist:     "用户已经存在",
 	UserUnExist:   "用户不存在，请注册",
 	PasswordError: "密码错误",
+
+	ErrOperate: "错误操作",
 }
 
 // GetMsg 根据状态码获取对应信息

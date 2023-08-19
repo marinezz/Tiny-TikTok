@@ -31,8 +31,8 @@ func (*VideoService) CommentAction(ctx context.Context, req *service.CommentActi
 		commentResp := &service.Comment{
 			Id:      id,
 			Content: req.CommentText,
-			// 将Time.time转换成字符串形式
-			CreateDate: time.Format("2006-01-02 15:04:05"),
+			// 将Time.time转换成字符串形式，格式为mm-dd
+			CreateDate: time.Format("01-02"),
 		}
 
 		// 将评论返回
@@ -77,7 +77,7 @@ func BuildComments(comments []model.Comment) []*service.Comment {
 			Id:         comment.Id,
 			UserId:     comment.UserId,
 			Content:    comment.Content,
-			CreateDate: comment.CreatAt.Format("2006-01-02 15:04:05"),
+			CreateDate: comment.CreatAt.Format("01-02"),
 		})
 	}
 

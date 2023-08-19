@@ -43,6 +43,7 @@ func (*FavoriteModel) AddFavorite(favorite *Favorite) error {
 		if result.Error != nil {
 			return result.Error
 		}
+
 	} else {
 		// 否则创建新记录
 		flake, _ := snowFlake.NewSnowFlake(7, 2)

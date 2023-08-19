@@ -19,7 +19,7 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 	if action == 1 {
 		// 操作favorite表
 		model.GetFavoriteInstance().AddFavorite(&favorite)
-		// 操作video表，喜欢记录 + 1
+		// 操作video表，喜欢记录 + 1  todo 视频表中数据会重复增加
 		model.GetVideoInstance().AddFavoriteCount(req.VideoId)
 	}
 
