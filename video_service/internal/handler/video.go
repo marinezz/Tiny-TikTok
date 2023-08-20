@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"log"
+	"sync"
 	"time"
 	"utils/exception"
 	"video/internal/model"
@@ -54,6 +55,7 @@ func (*VideoService) Feed(ctx context.Context, req *service.FeedRequest) (resp *
 
 // PublishAction 发布视频
 func (*VideoService) PublishAction(ctx context.Context, req *service.PublishActionRequest) (resp *service.PublishActionResponse, err error) {
+	var updataErr, creatErr error
 	resp = new(service.PublishActionResponse)
 
 	// 获取参数,生成地址
@@ -65,28 +67,55 @@ func (*VideoService) PublishAction(ctx context.Context, req *service.PublishActi
 	videoUrl := "http://tiny-tiktok.oss-cn-chengdu.aliyuncs.com/" + videoDir
 	pictureUrl := "http://tiny-tiktok.oss-cn-chengdu.aliyuncs.com/" + pictureDir
 
+	// 等待上传和创建数组库完成
+	var wg sync.WaitGroup
+	wg.Add(2)
+
 	// 上传视频，切取封面，上传图片
 	go func() {
+		defer wg.Done()
 		// 上传视频
-		third_party.Upload(videoDir, req.Data)
+		updataErr = third_party.Upload(videoDir, req.Data)
 		// 获取封面,获取第几秒的封面
 		coverByte, _ := cut.Cover(videoUrl, "00:00:01")
 		// 上传封面
-		third_party.Upload(pictureDir, coverByte)
+		updataErr = third_party.Upload(pictureDir, coverByte)
 		log.Print("上传成功")
 	}()
 
-	// 创建video
-	video := model.Video{
-		AuthId:        req.UserId,
-		Title:         title,
-		CoverUrl:      pictureUrl,
-		PlayUrl:       videoUrl,
-		FavoriteCount: 0,
-		CommentCount:  0,
-		CreatAt:       time.Now(),
+	// 创建数据
+	go func() {
+		defer wg.Done()
+		// 创建video
+		video := model.Video{
+			AuthId:        req.UserId,
+			Title:         title,
+			CoverUrl:      pictureUrl,
+			PlayUrl:       videoUrl,
+			FavoriteCount: 0,
+			CommentCount:  0,
+			CreatAt:       time.Now(),
+		}
+		creatErr = model.GetVideoInstance().Create(&video)
+	}()
+
+	wg.Wait()
+
+	// 异步回滚
+	if updataErr != nil || creatErr != nil {
+		go func() {
+			// 存入数据库失败，删除上传
+			if creatErr != nil {
+				_ = third_party.Delete(videoDir)
+				_ = third_party.Delete(pictureDir)
+			}
+			// 上传失败，删除数据库
+			if updataErr != nil {
+				// TODO 根据url查找，效率比较低
+				_ = model.GetVideoInstance().DeleteVideoByUrl(videoUrl)
+			}
+		}()
 	}
-	err = model.GetVideoInstance().Create(&video)
 	if err != nil {
 		resp.StatusCode = exception.ERROR
 		resp.StatusMsg = exception.GetMsg(exception.ERROR)

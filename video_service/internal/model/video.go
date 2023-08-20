@@ -44,6 +44,21 @@ func (*VideoModel) Create(video *Video) error {
 	return nil
 }
 
+// DeleteVideoByUrl 删除视频
+func (v *VideoModel) DeleteVideoByUrl(videoUrl string) error {
+	var video Video
+	if err := DB.Where("play_url = ?", videoUrl).First(&video).Error; err != nil {
+		return err
+	}
+
+	// 删除找到的记录
+	if err := DB.Delete(&video).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // GetVideoByTime 根据创建时间获取视频
 func (*VideoModel) GetVideoByTime(timePoint time.Time) ([]Video, error) {
 	var videos []Video
