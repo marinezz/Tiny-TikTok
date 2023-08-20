@@ -34,7 +34,10 @@ func Feed(ctx *gin.Context) {
 	}
 
 	videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
-	feedResp, _ := videoServiceClient.Feed(context.Background(), &feedReq)
+	feedResp, err := videoServiceClient.Feed(context.Background(), &feedReq)
+	if err != nil {
+		PanicIfVideoError(err)
+	}
 
 	var userIds []int64
 	for _, video := range feedResp.VideoList {
@@ -78,7 +81,10 @@ func PublishAction(ctx *gin.Context) {
 	publishActionReq.Data = buf
 
 	videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
-	videoServiceResp, _ := videoServiceClient.PublishAction(context.Background(), &publishActionReq)
+	videoServiceResp, err := videoServiceClient.PublishAction(context.Background(), &publishActionReq)
+	if err != nil {
+		PanicIfVideoError(err)
+	}
 
 	r := res.PublishActionResponse{
 		StatusCode: videoServiceResp.StatusCode,
@@ -98,7 +104,10 @@ func PublishList(ctx *gin.Context) {
 	pulishListReq.UserId = userId
 
 	videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
-	publishListResp, _ := videoServiceClient.PublishList(context.Background(), &pulishListReq)
+	publishListResp, err := videoServiceClient.PublishList(context.Background(), &pulishListReq)
+	if err != nil {
+		PanicIfVideoError(err)
+	}
 
 	var userIds []int64
 	for _, video := range publishListResp.VideoList {

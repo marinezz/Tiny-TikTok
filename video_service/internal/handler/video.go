@@ -75,6 +75,7 @@ func (*VideoService) PublishAction(ctx context.Context, req *service.PublishActi
 		third_party.Upload(pictureDir, coverByte)
 		log.Print("上传成功")
 	}()
+
 	// 创建video
 	video := model.Video{
 		AuthId:        req.UserId,

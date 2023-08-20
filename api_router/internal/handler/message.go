@@ -22,9 +22,8 @@ func PostMessage(ctx *gin.Context) {
 
 	socialServiceClient := ctx.Keys["social_service"].(service.SocialServiceClient)
 	socialResp, err := socialServiceClient.PostMessage(context.Background(), &postMessage)
-
 	if err != nil {
-		panic(err)
+		PanicIfMessageError(err)
 	}
 
 	r := res.PostMessageResponse{
@@ -45,7 +44,7 @@ func GetMessage(ctx *gin.Context) {
 	socialResp, err := socialServiceClient.GetMessage(context.Background(), &getMessage)
 
 	if err != nil {
-		panic(err)
+		PanicIfMessageError(err)
 	}
 
 	r := new(res.GetMessageResponse)

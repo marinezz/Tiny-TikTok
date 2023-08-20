@@ -19,7 +19,7 @@ func FavoriteAction(ctx *gin.Context) {
 	// string转int64
 	videoId := ctx.PostForm("video_id")
 	favoriteActionReq.VideoId, _ = strconv.ParseInt(videoId, 10, 64)
-	// string转int32
+
 	actionType := ctx.PostForm("action_type")
 	actionTypeValue, _ := strconv.Atoi(actionType)
 
@@ -28,7 +28,10 @@ func FavoriteAction(ctx *gin.Context) {
 		favoriteActionReq.ActionType = int64(actionTypeValue)
 
 		videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
-		videoServiceResp, _ := videoServiceClient.FavoriteAction(context.Background(), &favoriteActionReq)
+		videoServiceResp, err := videoServiceClient.FavoriteAction(context.Background(), &favoriteActionReq)
+		if err != nil {
+			PanicIfFavoriteError(err)
+		}
 
 		r := res.FavoriteActionResponse{
 			StatusCode: videoServiceResp.StatusCode,
@@ -55,7 +58,10 @@ func FavoriteList(ctx *gin.Context) {
 	favoriteListReq.UserId = userId
 
 	videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
-	favoriteListResp, _ := videoServiceClient.FavoriteList(context.Background(), &favoriteListReq)
+	favoriteListResp, err := videoServiceClient.FavoriteList(context.Background(), &favoriteListReq)
+	if err != nil {
+		PanicIfFavoriteError(err)
+	}
 
 	// 找到所有的用户Id
 	var userIds []int64

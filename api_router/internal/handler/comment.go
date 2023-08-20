@@ -32,14 +32,16 @@ func CommentAction(ctx *gin.Context) {
 	}
 
 	videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
-	videoServiceResp, _ := videoServiceClient.CommentAction(context.Background(), &commentActionReq)
+	videoServiceResp, err := videoServiceClient.CommentAction(context.Background(), &commentActionReq)
+	if err != nil {
+		PanicIfCommentError(err)
+	}
 
 	// 如果是删除评论的操作
 	if actionTypeValue == 2 {
 		r := res.CommentActionResponse{
 			StatusCode: videoServiceResp.StatusCode,
 			StatusMsg:  videoServiceResp.StatusMsg,
-			//Comment:    nil,
 		}
 
 		ctx.JSON(http.StatusOK, r)
@@ -67,7 +69,10 @@ func CommentList(ctx *gin.Context) {
 	commentListReq.VideoId = videoId
 
 	videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
-	commentListResp, _ := videoServiceClient.CommentList(context.Background(), &commentListReq)
+	commentListResp, err := videoServiceClient.CommentList(context.Background(), &commentListReq)
+	if err != nil {
+		PanicIfCommentError(err)
+	}
 
 	// 找到所有的用户Id
 	var userIds []int64
