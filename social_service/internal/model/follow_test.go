@@ -18,7 +18,7 @@ func TestFollowModel_FollowAction(t *testing.T) {
 
 func TestFollowModel_IsFollow(t *testing.T) {
 	InitDb()
-	res, err := GetFollowInstance().IsFollow(1, 2)
+	res, err := GetFollowInstance().IsFollow(5155644223918080, 5155317378584576)
 	if err != nil {
 		panic(err)
 	}

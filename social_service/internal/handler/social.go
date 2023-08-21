@@ -117,6 +117,27 @@ func (*SocialService) GetFollowerCount(ctx context.Context, req *service.FollowC
 	return resp, nil
 }
 
+func (*SocialService) GetFollowInfo(ctx context.Context, req *service.FollowInfoRequest) (resp *service.FollowInfoResponse, err error) {
+	resp = new(service.FollowInfoResponse)
+	for _, toUserId := range req.ToUserId {
+		res1, err1 := model.GetFollowInstance().IsFollow(req.UserId, toUserId)
+		cnt2, err2 := model.GetFollowInstance().GetFollowCount(toUserId)
+		cnt3, err3 := model.GetFollowInstance().GetFollowerCount(toUserId)
+		if err1 != nil || err2 != nil || err3 != nil {
+			resp.StatusCode = exception.ERROR
+			resp.StatusMsg = exception.GetMsg(exception.ERROR)
+			return resp, nil
+		}
+		resp.FollowInfo = append(resp.FollowInfo, &service.FollowInfo{
+			IsFollow:      res1,
+			FollowCount:   cnt2,
+			FollowerCount: cnt3,
+			ToUserId:      toUserId,
+		})
+	}
+	return resp, nil
+}
+
 // PostMessage 消息服务
 func (*SocialService) PostMessage(ctx context.Context, req *service.PostMessageRequest) (resp *service.PostMessageResponse, err error) {
 	resp = new(service.PostMessageResponse)

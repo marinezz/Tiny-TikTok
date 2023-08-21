@@ -76,6 +76,33 @@ message FollowerCountResponse{
   int64 FollowerCount = 3;
 }
 
+message FollowInfoRequest{
+  // @gotags:json:"user_id" form:"user_id" uri:"user_id"
+  int64 UserId = 1;
+  // @gotags:json:"to_user_id" form:"to_user_id" uri:"to_user_id"
+  repeated int64 ToUserId = 2;
+}
+
+message FollowInfo{
+  // @gotags:json:"is_follow" form:"is_follow" uri:"is_follow"
+  bool IsFollow = 1;
+  // @gotags:json:"follow_count" form:"follow_count" uri:"follow_count"
+  int64 FollowCount = 2;
+  // @gotags:json:"follower_count" form:"follower_count" uri:"follower_count"
+  int64 FollowerCount = 3;
+  // @gotags:json:"to_user_id" form:"to_user_id" uri:"to_user_id"
+  int64 ToUserId = 4;
+}
+
+message FollowInfoResponse{
+  // @gotags:json:"status_code" form:"status_code" uri:"status_code"
+  int32  StatusCode = 1;
+  // @gotags:json:"status_msg" form:"status_msg" uri:"status_msg"
+  string StatusMsg = 2;
+  // @gotags:json:"follow_info" form:"follow_info" uri:"follow_info"
+  repeated FollowInfo FollowInfo = 3;
+}
+
 message PostMessageRequest{
   // @gotags:json:"user_id" form:"user_id" uri:"user_id"
   int64 UserId = 1;
@@ -134,6 +161,8 @@ service SocialService{
 
   rpc GetFollowCount(FollowCountRequest) returns(FollowCountResponse);
   rpc GetFollowerCount(FollowCountRequest) returns(FollowerCountResponse);
+
+  rpc GetFollowInfo(FollowInfoRequest) returns(FollowInfoResponse);
 
   // 消息服务
   rpc PostMessage(PostMessageRequest) returns(PostMessageResponse);

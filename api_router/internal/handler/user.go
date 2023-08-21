@@ -77,17 +77,19 @@ func UserInfo(ctx *gin.Context) {
 
 // GetUserInfo 根据用户id，去调取三个服务，拼接出所有的用户信息
 func GetUserInfo(userIds []int64, ctx *gin.Context) (userInfos []res.User) {
-	var follow []Follow
 	// 构建三个服务的请求
 	var userInfoReq service.UserInfoRequest
 	var countInfoReq service.CountRequest
+	var followInfoReq service.FollowInfoRequest
 
 	userInfoReq.UserIds = userIds
 	countInfoReq.UserIds = userIds
+	followInfoReq.ToUserId = userIds
 
 	// 创建接收三个响应
 	var userResp *service.UserInfoResponse
 	var countInfoResp *service.CountResponse
+	var followInfoResp *service.FollowInfoResponse
 
 	// 分别去调用三个服务
 	var wg sync.WaitGroup
@@ -108,43 +110,25 @@ func GetUserInfo(userIds []int64, ctx *gin.Context) (userInfos []res.User) {
 		defer wg.Done()
 
 		// 拿到当前用户的id，在is_follow找对应关系
-		userIdStr := ctx.Query("user_id")
-		userId, _ := strconv.ParseInt(userIdStr, 10, 64)
+		userIdStr, _ := ctx.Get("user_id")
+		userId, _ := userIdStr.(int64)
+		followInfoReq.UserId = userId
 		socialServiceClient := ctx.Keys["social_service"].(service.SocialServiceClient)
-		for _, id := range userIds {
-			// 是否喜欢
-			var isFollowReq service.IsFollowRequest
-			isFollowReq.UserId = userId
-			isFollowReq.ToUserId = id
-			isFollow, _ := socialServiceClient.IsFollow(context.Background(), &isFollowReq)
 
-			// 关注数
-			var followCountReq service.FollowCountRequest
-			followCountReq.UserId = id
-			followCount, _ := socialServiceClient.GetFollowCount(context.Background(), &followCountReq)
-
-			// 粉丝数
-			followerCount, _ := socialServiceClient.GetFollowerCount(context.Background(), &followCountReq)
-
-			follow = append(follow, Follow{
-				IsFollow:      isFollow.IsFollow,
-				FollowCount:   followCount.FollowCount,
-				FollowerCount: followerCount.FollowerCount,
-			})
-		}
+		followInfoResp, _ = socialServiceClient.GetFollowInfo(context.Background(), &followInfoReq)
 	}()
 	wg.Wait()
 
 	// 构建信息userResp.Users[0], countInfoResp.Counts[0])
 	for index, _ := range userIds {
-		userInfos = append(userInfos, BuildUser(userResp.Users[index], countInfoResp.Counts[index], follow[index]))
+		userInfos = append(userInfos, BuildUser(userResp.Users[index], countInfoResp.Counts[index], followInfoResp.FollowInfo[index]))
 	}
 
 	return userInfos
 }
 
 // BuildUser 构建用户信息 Todo 还有其余信息的构建
-func BuildUser(user *service.User, count *service.Count, follow Follow) res.User {
+func BuildUser(user *service.User, count *service.Count, follow *service.FollowInfo) res.User {
 	return res.User{
 		Id:   user.Id,
 		Name: user.Name,
