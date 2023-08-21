@@ -24,12 +24,9 @@ const _ = grpc.SupportPackageIsVersion7
 type SocialServiceClient interface {
 	// 关注服务
 	FollowAction(ctx context.Context, in *FollowRequest, opts ...grpc.CallOption) (*FollowResponse, error)
-	IsFollow(ctx context.Context, in *IsFollowRequest, opts ...grpc.CallOption) (*IsFollowResponse, error)
 	GetFollowList(ctx context.Context, in *FollowListRequest, opts ...grpc.CallOption) (*FollowListResponse, error)
 	GetFollowerList(ctx context.Context, in *FollowListRequest, opts ...grpc.CallOption) (*FollowListResponse, error)
 	GetFriendList(ctx context.Context, in *FollowListRequest, opts ...grpc.CallOption) (*FollowListResponse, error)
-	GetFollowCount(ctx context.Context, in *FollowCountRequest, opts ...grpc.CallOption) (*FollowCountResponse, error)
-	GetFollowerCount(ctx context.Context, in *FollowCountRequest, opts ...grpc.CallOption) (*FollowerCountResponse, error)
 	GetFollowInfo(ctx context.Context, in *FollowInfoRequest, opts ...grpc.CallOption) (*FollowInfoResponse, error)
 	// 消息服务
 	PostMessage(ctx context.Context, in *PostMessageRequest, opts ...grpc.CallOption) (*PostMessageResponse, error)
@@ -47,15 +44,6 @@ func NewSocialServiceClient(cc grpc.ClientConnInterface) SocialServiceClient {
 func (c *socialServiceClient) FollowAction(ctx context.Context, in *FollowRequest, opts ...grpc.CallOption) (*FollowResponse, error) {
 	out := new(FollowResponse)
 	err := c.cc.Invoke(ctx, "/pb.SocialService/FollowAction", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *socialServiceClient) IsFollow(ctx context.Context, in *IsFollowRequest, opts ...grpc.CallOption) (*IsFollowResponse, error) {
-	out := new(IsFollowResponse)
-	err := c.cc.Invoke(ctx, "/pb.SocialService/IsFollow", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -83,24 +71,6 @@ func (c *socialServiceClient) GetFollowerList(ctx context.Context, in *FollowLis
 func (c *socialServiceClient) GetFriendList(ctx context.Context, in *FollowListRequest, opts ...grpc.CallOption) (*FollowListResponse, error) {
 	out := new(FollowListResponse)
 	err := c.cc.Invoke(ctx, "/pb.SocialService/GetFriendList", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *socialServiceClient) GetFollowCount(ctx context.Context, in *FollowCountRequest, opts ...grpc.CallOption) (*FollowCountResponse, error) {
-	out := new(FollowCountResponse)
-	err := c.cc.Invoke(ctx, "/pb.SocialService/GetFollowCount", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *socialServiceClient) GetFollowerCount(ctx context.Context, in *FollowCountRequest, opts ...grpc.CallOption) (*FollowerCountResponse, error) {
-	out := new(FollowerCountResponse)
-	err := c.cc.Invoke(ctx, "/pb.SocialService/GetFollowerCount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -140,12 +110,9 @@ func (c *socialServiceClient) GetMessage(ctx context.Context, in *GetMessageRequ
 type SocialServiceServer interface {
 	// 关注服务
 	FollowAction(context.Context, *FollowRequest) (*FollowResponse, error)
-	IsFollow(context.Context, *IsFollowRequest) (*IsFollowResponse, error)
 	GetFollowList(context.Context, *FollowListRequest) (*FollowListResponse, error)
 	GetFollowerList(context.Context, *FollowListRequest) (*FollowListResponse, error)
 	GetFriendList(context.Context, *FollowListRequest) (*FollowListResponse, error)
-	GetFollowCount(context.Context, *FollowCountRequest) (*FollowCountResponse, error)
-	GetFollowerCount(context.Context, *FollowCountRequest) (*FollowerCountResponse, error)
 	GetFollowInfo(context.Context, *FollowInfoRequest) (*FollowInfoResponse, error)
 	// 消息服务
 	PostMessage(context.Context, *PostMessageRequest) (*PostMessageResponse, error)
@@ -160,9 +127,6 @@ type UnimplementedSocialServiceServer struct {
 func (UnimplementedSocialServiceServer) FollowAction(context.Context, *FollowRequest) (*FollowResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FollowAction not implemented")
 }
-func (UnimplementedSocialServiceServer) IsFollow(context.Context, *IsFollowRequest) (*IsFollowResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method IsFollow not implemented")
-}
 func (UnimplementedSocialServiceServer) GetFollowList(context.Context, *FollowListRequest) (*FollowListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFollowList not implemented")
 }
@@ -171,12 +135,6 @@ func (UnimplementedSocialServiceServer) GetFollowerList(context.Context, *Follow
 }
 func (UnimplementedSocialServiceServer) GetFriendList(context.Context, *FollowListRequest) (*FollowListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFriendList not implemented")
-}
-func (UnimplementedSocialServiceServer) GetFollowCount(context.Context, *FollowCountRequest) (*FollowCountResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetFollowCount not implemented")
-}
-func (UnimplementedSocialServiceServer) GetFollowerCount(context.Context, *FollowCountRequest) (*FollowerCountResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetFollowerCount not implemented")
 }
 func (UnimplementedSocialServiceServer) GetFollowInfo(context.Context, *FollowInfoRequest) (*FollowInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFollowInfo not implemented")
@@ -214,24 +172,6 @@ func _SocialService_FollowAction_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SocialServiceServer).FollowAction(ctx, req.(*FollowRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SocialService_IsFollow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(IsFollowRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SocialServiceServer).IsFollow(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pb.SocialService/IsFollow",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SocialServiceServer).IsFollow(ctx, req.(*IsFollowRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -286,42 +226,6 @@ func _SocialService_GetFriendList_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SocialServiceServer).GetFriendList(ctx, req.(*FollowListRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SocialService_GetFollowCount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(FollowCountRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SocialServiceServer).GetFollowCount(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pb.SocialService/GetFollowCount",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SocialServiceServer).GetFollowCount(ctx, req.(*FollowCountRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SocialService_GetFollowerCount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(FollowCountRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SocialServiceServer).GetFollowerCount(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pb.SocialService/GetFollowerCount",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SocialServiceServer).GetFollowerCount(ctx, req.(*FollowCountRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -392,10 +296,6 @@ var SocialService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SocialService_FollowAction_Handler,
 		},
 		{
-			MethodName: "IsFollow",
-			Handler:    _SocialService_IsFollow_Handler,
-		},
-		{
 			MethodName: "GetFollowList",
 			Handler:    _SocialService_GetFollowList_Handler,
 		},
@@ -406,14 +306,6 @@ var SocialService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetFriendList",
 			Handler:    _SocialService_GetFriendList_Handler,
-		},
-		{
-			MethodName: "GetFollowCount",
-			Handler:    _SocialService_GetFollowCount_Handler,
-		},
-		{
-			MethodName: "GetFollowerCount",
-			Handler:    _SocialService_GetFollowerCount_Handler,
 		},
 		{
 			MethodName: "GetFollowInfo",

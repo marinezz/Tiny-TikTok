@@ -35,21 +35,6 @@ func (*SocialService) FollowAction(ctx context.Context, req *service.FollowReque
 	return resp, nil
 }
 
-func (*SocialService) IsFollow(ctx context.Context, req *service.IsFollowRequest) (resp *service.IsFollowResponse, err error) {
-	resp = new(service.IsFollowResponse)
-	res, err := model.GetFollowInstance().IsFollow(req.UserId, req.ToUserId)
-	if err != nil {
-		resp.IsFollow = false
-		resp.StatusCode = exception.ERROR
-		resp.StatusMsg = exception.GetMsg(exception.ERROR)
-		return resp, nil
-	}
-	resp.IsFollow = res
-	resp.StatusCode = exception.SUCCESS
-	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
-	return resp, nil
-}
-
 func (*SocialService) GetFollowList(ctx context.Context, req *service.FollowListRequest) (resp *service.FollowListResponse, err error) {
 	resp = new(service.FollowListResponse)
 	err = model.GetFollowInstance().GetFollowList(req.UserId, &resp.UserId)
@@ -84,34 +69,6 @@ func (*SocialService) GetFriendList(ctx context.Context, req *service.FollowList
 		resp.StatusMsg = exception.GetMsg(exception.ERROR)
 		return resp, nil
 	}
-	resp.StatusCode = exception.SUCCESS
-	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
-	return resp, nil
-}
-
-func (*SocialService) GetFollowCount(ctx context.Context, req *service.FollowCountRequest) (resp *service.FollowCountResponse, err error) {
-	resp = new(service.FollowCountResponse)
-	cnt, err := model.GetFollowInstance().GetFollowCount(req.UserId)
-	if err != nil {
-		resp.StatusCode = exception.ERROR
-		resp.StatusMsg = exception.GetMsg(exception.ERROR)
-		return resp, nil
-	}
-	resp.FollowCount = cnt
-	resp.StatusCode = exception.SUCCESS
-	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
-	return resp, nil
-}
-
-func (*SocialService) GetFollowerCount(ctx context.Context, req *service.FollowCountRequest) (resp *service.FollowerCountResponse, err error) {
-	resp = new(service.FollowerCountResponse)
-	cnt, err := model.GetFollowInstance().GetFollowerCount(req.UserId)
-	if err != nil {
-		resp.StatusCode = exception.ERROR
-		resp.StatusMsg = exception.GetMsg(exception.ERROR)
-		return resp, nil
-	}
-	resp.FollowerCount = cnt
 	resp.StatusCode = exception.SUCCESS
 	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
 	return resp, nil
