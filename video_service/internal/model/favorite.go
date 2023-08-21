@@ -29,11 +29,11 @@ func GetFavoriteInstance() *FavoriteModel {
 }
 
 // AddFavorite 创建点赞
-func (*FavoriteModel) AddFavorite(favorite *Favorite) (error, bool) {
+func (*FavoriteModel) AddFavorite(favorite *Favorite) (bool, error) {
 	result := DB.Where("user_id=? AND video_id=?", favorite.UserId, favorite.VideoId).First(&favorite)
 	// 发生除没找到记录的其它错误
 	if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		return result.Error, false
+		return false, result.Error
 	}
 
 	// 判断是否需要视频表中创建新的记录
@@ -46,7 +46,7 @@ func (*FavoriteModel) AddFavorite(favorite *Favorite) (error, bool) {
 			favorite.IsFavorite = true
 			result = DB.Save(&favorite)
 			if result.Error != nil {
-				return result.Error, false
+				return false, result.Error
 			}
 		}
 	} else {
@@ -56,10 +56,10 @@ func (*FavoriteModel) AddFavorite(favorite *Favorite) (error, bool) {
 		result = DB.Create(&favorite)
 		isAdd = true
 		if result.Error != nil {
-			return result.Error, false
+			return false, result.Error
 		}
 	}
-	return nil, isAdd
+	return isAdd, nil
 }
 
 // IsFavorite 根据用户id和视频id获取点赞状态

@@ -23,6 +23,7 @@ func (*VideoService) CommentAction(ctx context.Context, req *service.CommentActi
 	// 发布评论
 	if action == 1 {
 		comment.CreatAt = time
+		// 创建评论
 		id, _ := model.GetCommentInstance().CreateComment(&comment)
 
 		// 视频评论数量 + 1
@@ -60,7 +61,12 @@ func (*VideoService) CommentList(ctx context.Context, req *service.CommentListRe
 	resp = new(service.CommentListResponse)
 
 	// 根据视频id找到所有的评论
-	comments, _ := model.GetCommentInstance().CommentList(req.VideoId)
+	comments, err := model.GetCommentInstance().CommentList(req.VideoId)
+	if err != nil {
+		resp.StatusCode = exception.CommentUnExist
+		resp.StatusMsg = exception.GetMsg(exception.CommentUnExist)
+		return nil, err
+	}
 
 	resp.StatusCode = exception.SUCCESS
 	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)

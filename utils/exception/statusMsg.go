@@ -9,11 +9,25 @@ var Msg = map[int]string{
 	UnAuth:       "Token未经授权",
 	TokenTimeOut: "Token授权已过期",
 
+	ErrOperate: "错误操作",
+
+	DataErr: "数据创建错误",
+
 	UserExist:     "用户已经存在",
 	UserUnExist:   "用户不存在，请注册",
 	PasswordError: "密码错误",
 
-	ErrOperate: "错误操作",
+	VideoUnExist:     "视频信息不存在",
+	VideoUploadErr:   "视频上传失败",
+	VideoFavoriteErr: "视频点赞失败",
+	UserNoVideo:      "用户没有发布作品",
+
+	FavoriteErr:       "点赞失败",
+	CancelFavoriteErr: "取消点赞失败",
+	VideoNoFavorite:   "视频没有点赞",
+	UserNoFavorite:    "用户没有点赞",
+
+	CommentUnExist: "评论不存在",
 }
 
 // GetMsg 根据状态码获取对应信息

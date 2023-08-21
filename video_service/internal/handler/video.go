@@ -34,7 +34,12 @@ func (*VideoService) Feed(ctx context.Context, req *service.FeedRequest) (resp *
 	}
 
 	// 根据时间获取视频
-	videos, _ := model.GetVideoInstance().GetVideoByTime(timePoint)
+	videos, err := model.GetVideoInstance().GetVideoByTime(timePoint)
+	if err != nil {
+		resp.StatusCode = exception.VideoUnExist
+		resp.StatusMsg = exception.GetMsg(exception.VideoUnExist)
+		return resp, err
+	}
 
 	if req.UserId == -1 {
 		// 用户没有登录
@@ -116,10 +121,10 @@ func (*VideoService) PublishAction(ctx context.Context, req *service.PublishActi
 			}
 		}()
 	}
-	if err != nil {
-		resp.StatusCode = exception.ERROR
-		resp.StatusMsg = exception.GetMsg(exception.ERROR)
-		return resp, nil
+	if updataErr != nil || creatErr != nil {
+		resp.StatusCode = exception.VideoUploadErr
+		resp.StatusMsg = exception.GetMsg(exception.VideoUploadErr)
+		return resp, updataErr
 	}
 	resp.StatusCode = exception.SUCCESS
 	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
@@ -132,7 +137,12 @@ func (*VideoService) PublishList(ctx context.Context, req *service.PublishListRe
 	resp = new(service.PublishListResponse)
 
 	// 根据用户id找到所有的视频
-	videos, _ := model.GetVideoInstance().GetVideoListByUser(req.UserId)
+	videos, err := model.GetVideoInstance().GetVideoListByUser(req.UserId)
+	if err != nil {
+		resp.StatusCode = exception.VideoUnExist
+		resp.StatusMsg = exception.GetMsg(exception.VideoUnExist)
+		return resp, err
+	}
 
 	resp.StatusCode = exception.SUCCESS
 	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
@@ -150,11 +160,26 @@ func (*VideoService) CountInfo(ctx context.Context, req *service.CountRequest) (
 	for _, userId := range userIds {
 		var count service.Count
 		// 获取赞的数量
-		count.TotalFavorited, _ = model.GetVideoInstance().GetFavoritedCount(userId)
+		count.TotalFavorited, err = model.GetVideoInstance().GetFavoritedCount(userId)
+		if err != nil {
+			resp.StatusCode = exception.VideoNoFavorite
+			resp.StatusMsg = exception.GetMsg(exception.VideoNoFavorite)
+			return resp, err
+		}
 		// 获取作品数量
-		count.WorkCount, _ = model.GetVideoInstance().GetWorkCount(userId)
+		count.WorkCount, err = model.GetVideoInstance().GetWorkCount(userId)
+		if err != nil {
+			resp.StatusCode = exception.UserNoVideo
+			resp.StatusMsg = exception.GetMsg(exception.UserNoVideo)
+			return resp, err
+		}
 		// 获取喜欢数量
-		count.FavoriteCount, _ = model.GetFavoriteInstance().GetFavoriteCount(userId)
+		count.FavoriteCount, err = model.GetFavoriteInstance().GetFavoriteCount(userId)
+		if err != nil {
+			resp.StatusCode = exception.UserNoFavorite
+			resp.StatusMsg = exception.GetMsg(exception.UserNoFavorite)
+			return resp, err
+		}
 
 		resp.Counts = append(resp.Counts, &count)
 	}
