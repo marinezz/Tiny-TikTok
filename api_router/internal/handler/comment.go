@@ -37,27 +37,28 @@ func CommentAction(ctx *gin.Context) {
 		PanicIfCommentError(err)
 	}
 
+	if actionTypeValue == 1 {
+		// 构建用户信息
+		userIds := []int64{userId.(int64)}
+		userInfos := GetUserInfo(userIds, ctx)
+
+		r := res.CommentActionResponse{
+			StatusCode: videoServiceResp.StatusCode,
+			StatusMsg:  videoServiceResp.StatusMsg,
+			Comment:    BuildComment(videoServiceResp.Comment, userInfos[0]),
+		}
+
+		ctx.JSON(http.StatusOK, r)
+	}
 	// 如果是删除评论的操作
 	if actionTypeValue == 2 {
-		r := res.CommentActionResponse{
+		r := res.CommentDeleteResponse{
 			StatusCode: videoServiceResp.StatusCode,
 			StatusMsg:  videoServiceResp.StatusMsg,
 		}
 
 		ctx.JSON(http.StatusOK, r)
 	}
-
-	// 构建用户信息
-	userIds := []int64{userId.(int64)}
-	userInfos := GetUserInfo(userIds, ctx)
-
-	r := res.CommentActionResponse{
-		StatusCode: videoServiceResp.StatusCode,
-		StatusMsg:  videoServiceResp.StatusMsg,
-		Comment:    BuildComment(videoServiceResp.Comment, userInfos[0]),
-	}
-
-	ctx.JSON(http.StatusOK, r)
 }
 
 func CommentList(ctx *gin.Context) {

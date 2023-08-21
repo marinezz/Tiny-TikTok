@@ -27,7 +27,9 @@ var Msg = map[int]string{
 	VideoNoFavorite:   "视频没有点赞",
 	UserNoFavorite:    "用户没有点赞",
 
-	CommentUnExist: "评论不存在",
+	CommentErr:       "评论失败",
+	CommentUnExist:   "评论不存在",
+	CommentDeleteErr: "评论删除失败",
 }
 
 // GetMsg 根据状态码获取对应信息

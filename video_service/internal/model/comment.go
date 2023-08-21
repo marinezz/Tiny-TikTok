@@ -1,6 +1,8 @@
 package model
 
 import (
+	"errors"
+	"gorm.io/gorm"
 	"sync"
 	"time"
 	"utils/snowFlake"
@@ -31,13 +33,13 @@ func GetCommentInstance() *CommentModel {
 }
 
 // CreateComment 新增评论
-func (*CommentModel) CreateComment(comment *Comment) (id int64, err error) {
+func (*CommentModel) CreateComment(tx *gorm.DB, comment *Comment) (id int64, err error) {
 	flake, _ := snowFlake.NewSnowFlake(7, 2)
 	comment.Id = flake.NextId()
 	comment.CommentStatus = true
 	comment.CreatAt = time.Now()
 
-	result := DB.Create(&comment)
+	result := tx.Create(&comment)
 	if result.Error != nil {
 		return -1, result.Error
 	}
@@ -46,15 +48,18 @@ func (*CommentModel) CreateComment(comment *Comment) (id int64, err error) {
 }
 
 // DeleteComment 删除评论
-func (*CommentModel) DeleteComment(commentId int64) error {
+func (*CommentModel) DeleteComment(tx *gorm.DB, commentId int64) error {
 	var comment Comment
-	result := DB.First(&comment, commentId)
+	result := tx.First(&comment, commentId)
 	if result.Error != nil {
 		return result.Error
 	}
+	if comment.CommentStatus == false {
+		return errors.New("评论不存在！！")
+	}
 
 	comment.CommentStatus = false
-	result = DB.Save(&comment)
+	result = tx.Save(&comment)
 	if result.Error != nil {
 		return result.Error
 	}

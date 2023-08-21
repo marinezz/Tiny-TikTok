@@ -34,5 +34,7 @@ const (
 	VideoNoFavorite   = 2302
 	UserNoFavorite    = 2303
 
-	CommentUnExist = 2401 // 评论相关
+	CommentErr       = 2400
+	CommentUnExist   = 2401 // 评论相关
+	CommentDeleteErr = 2402
 )

@@ -23,11 +23,35 @@ func (*VideoService) CommentAction(ctx context.Context, req *service.CommentActi
 	// 发布评论
 	if action == 1 {
 		comment.CreatAt = time
-		// 创建评论
-		id, _ := model.GetCommentInstance().CreateComment(&comment)
+
+		tx := model.DB.Begin()
+		defer func() {
+			if r := recover(); r != nil {
+				tx.Rollback()
+			}
+		}()
+
+		// 事务中执行创建操作
+		id, err := model.GetCommentInstance().CreateComment(tx, &comment)
+		if err != nil {
+			tx.Rollback()
+			resp.StatusCode = exception.SUCCESS
+			resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
+			resp.Comment = nil
+			return resp, err
+		}
 
 		// 视频评论数量 + 1
-		model.GetVideoInstance().AddCommentCount(req.VideoId)
+		err = model.GetVideoInstance().AddCommentCount(tx, req.VideoId)
+		if err != nil {
+			tx.Rollback()
+			resp.StatusCode = exception.SUCCESS
+			resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
+			resp.Comment = nil
+			return resp, err
+		}
+
+		tx.Commit()
 
 		commentResp := &service.Comment{
 			Id:      id,
@@ -45,9 +69,33 @@ func (*VideoService) CommentAction(ctx context.Context, req *service.CommentActi
 	}
 
 	// 删除评论
-	model.GetCommentInstance().DeleteComment(req.CommentId)
+	comment.CreatAt = time
+
+	tx := model.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	err = model.GetCommentInstance().DeleteComment(tx, req.CommentId)
+	if err != nil {
+		resp.StatusCode = exception.CommentDeleteErr
+		resp.StatusMsg = exception.GetMsg(exception.CommentDeleteErr)
+		resp.Comment = nil
+
+		return resp, err
+	}
 	// 视频评论数量 - 1
-	model.GetVideoInstance().DeleteCommentCount(req.VideoId)
+	err = model.GetVideoInstance().DeleteCommentCount(tx, req.VideoId)
+	if err != nil {
+		resp.StatusCode = exception.CommentDeleteErr
+		resp.StatusMsg = exception.GetMsg(exception.CommentDeleteErr)
+		resp.Comment = nil
+
+		return resp, err
+	}
+	tx.Commit()
 
 	resp.StatusCode = exception.SUCCESS
 	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)

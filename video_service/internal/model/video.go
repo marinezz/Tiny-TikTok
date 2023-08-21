@@ -126,8 +126,8 @@ func (*VideoModel) DeleteFavoriteCount(videoId int64) error {
 }
 
 // AddCommentCount 视频评论数量 + 1
-func (*VideoModel) AddCommentCount(videoId int64) error {
-	result := DB.Model(&Video{}).
+func (*VideoModel) AddCommentCount(tx *gorm.DB, videoId int64) error {
+	result := tx.Model(&Video{}).
 		Where("id = ?", videoId).
 		Update("comment_count", gorm.Expr("comment_count + ?", 1))
 	if result.Error != nil {
@@ -138,8 +138,8 @@ func (*VideoModel) AddCommentCount(videoId int64) error {
 }
 
 // DeleteCommentCount 视频评论数量 - 1
-func (*VideoModel) DeleteCommentCount(videoId int64) error {
-	result := DB.Model(&Video{}).
+func (*VideoModel) DeleteCommentCount(tx *gorm.DB, videoId int64) error {
+	result := tx.Model(&Video{}).
 		Where("id = ?", videoId).
 		Update("comment_count", gorm.Expr("comment_count - ?", 1))
 	if result.Error != nil {
