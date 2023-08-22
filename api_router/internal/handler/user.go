@@ -127,7 +127,10 @@ func GetUserInfo(userIds []int64, ctx *gin.Context) (userInfos []res.User) {
 		userId, _ := userIdStr.(int64)
 		followInfoReq.UserId = userId
 		socialServiceClient := ctx.Keys["social_service"].(service.SocialServiceClient)
-		followInfoResp, _ = socialServiceClient.GetFollowInfo(context.Background(), &followInfoReq)
+		followInfoResp, err = socialServiceClient.GetFollowInfo(context.Background(), &followInfoReq)
+		if err != nil {
+			PanicIfFollowError(err)
+		}
 	}()
 	wg.Wait()
 
@@ -140,7 +143,7 @@ func GetUserInfo(userIds []int64, ctx *gin.Context) (userInfos []res.User) {
 }
 
 // BuildUser 构建用户信息
-func BuildUser(user *service.User, count *service.Count, follow Follow) res.User {
+func BuildUser(user *service.User, count *service.Count, follow *service.FollowInfo) res.User {
 	return res.User{
 		Id:   user.Id,
 		Name: user.Name,
