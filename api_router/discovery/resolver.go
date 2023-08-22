@@ -33,6 +33,7 @@ func Resolver() map[string]interface{} {
 		logger.Log.Fatal(err)
 	}
 	userClient := service.NewUserServiceClient(userConn)
+	logger.Log.Info("获取用户服务实例--成功--")
 	serveInstance["user_service"] = userClient
 
 	// 获取视频服务实例
@@ -47,6 +48,7 @@ func Resolver() map[string]interface{} {
 	}
 
 	videoClient := service.NewVideoServiceClient(videoConn)
+	logger.Log.Info("获取视频服务实例--成功--")
 	serveInstance["video_service"] = videoClient
 
 	// 获取社交服务实例
@@ -61,6 +63,7 @@ func Resolver() map[string]interface{} {
 	}
 
 	socialClient := service.NewSocialServiceClient(socialConn)
+	logger.Log.Info("获取社交服务实例--成功--")
 	serveInstance["social_service"] = socialClient
 
 	wrapper.NewServiceWrapper("user_service")
