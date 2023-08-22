@@ -35,21 +35,6 @@ func (*SocialService) FollowAction(ctx context.Context, req *service.FollowReque
 	return resp, nil
 }
 
-func (*SocialService) IsFollow(ctx context.Context, req *service.IsFollowRequest) (resp *service.IsFollowResponse, err error) {
-	resp = new(service.IsFollowResponse)
-	res, err := model.GetFollowInstance().IsFollow(req.UserId, req.ToUserId)
-	if err != nil {
-		resp.IsFollow = false
-		resp.StatusCode = exception.ERROR
-		resp.StatusMsg = exception.GetMsg(exception.ERROR)
-		return resp, nil
-	}
-	resp.IsFollow = res
-	resp.StatusCode = exception.SUCCESS
-	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
-	return resp, nil
-}
-
 func (*SocialService) GetFollowList(ctx context.Context, req *service.FollowListRequest) (resp *service.FollowListResponse, err error) {
 	resp = new(service.FollowListResponse)
 	err = model.GetFollowInstance().GetFollowList(req.UserId, &resp.UserId)
@@ -89,31 +74,24 @@ func (*SocialService) GetFriendList(ctx context.Context, req *service.FollowList
 	return resp, nil
 }
 
-func (*SocialService) GetFollowCount(ctx context.Context, req *service.FollowCountRequest) (resp *service.FollowCountResponse, err error) {
-	resp = new(service.FollowCountResponse)
-	cnt, err := model.GetFollowInstance().GetFollowCount(req.UserId)
-	if err != nil {
-		resp.StatusCode = exception.ERROR
-		resp.StatusMsg = exception.GetMsg(exception.ERROR)
-		return resp, nil
+func (*SocialService) GetFollowInfo(ctx context.Context, req *service.FollowInfoRequest) (resp *service.FollowInfoResponse, err error) {
+	resp = new(service.FollowInfoResponse)
+	for _, toUserId := range req.ToUserId {
+		res1, err1 := model.GetFollowInstance().IsFollow(req.UserId, toUserId)
+		cnt2, err2 := model.GetFollowInstance().GetFollowCount(toUserId)
+		cnt3, err3 := model.GetFollowInstance().GetFollowerCount(toUserId)
+		if err1 != nil || err2 != nil || err3 != nil {
+			resp.StatusCode = exception.ERROR
+			resp.StatusMsg = exception.GetMsg(exception.ERROR)
+			return resp, nil
+		}
+		resp.FollowInfo = append(resp.FollowInfo, &service.FollowInfo{
+			IsFollow:      res1,
+			FollowCount:   cnt2,
+			FollowerCount: cnt3,
+			ToUserId:      toUserId,
+		})
 	}
-	resp.FollowCount = cnt
-	resp.StatusCode = exception.SUCCESS
-	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
-	return resp, nil
-}
-
-func (*SocialService) GetFollowerCount(ctx context.Context, req *service.FollowCountRequest) (resp *service.FollowerCountResponse, err error) {
-	resp = new(service.FollowerCountResponse)
-	cnt, err := model.GetFollowInstance().GetFollowerCount(req.UserId)
-	if err != nil {
-		resp.StatusCode = exception.ERROR
-		resp.StatusMsg = exception.GetMsg(exception.ERROR)
-		return resp, nil
-	}
-	resp.FollowerCount = cnt
-	resp.StatusCode = exception.SUCCESS
-	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
 	return resp, nil
 }
 

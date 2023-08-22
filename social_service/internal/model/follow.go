@@ -4,6 +4,7 @@ import (
 	"errors"
 	"gorm.io/gorm"
 	"sync"
+	"utils/snowFlake"
 )
 
 type Follow struct {
@@ -31,9 +32,22 @@ func GetFollowInstance() *FollowModel {
 
 // FollowAction 更新关注状态
 func (*FollowModel) FollowAction(follow *Follow) error {
-	res := DB.Where(Follow{UserId: follow.UserId, ToUserId: follow.ToUserId}).Assign(Follow{IsFollow: follow.IsFollow}).FirstOrCreate(&follow)
-	if res.Error != nil {
-		return res.Error
+	isFollow := follow.IsFollow
+	if err := DB.Where(&Follow{UserId: follow.UserId, ToUserId: follow.ToUserId}).First(&follow).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			flake, _ := snowFlake.NewSnowFlake(7, 3)
+			follow.Id = flake.NextId()
+			err = DB.Create(&follow).Error // create new record from newUser
+		}
+		if err != nil {
+			return err
+		}
+	}
+	if follow.Id != 0 && isFollow != follow.IsFollow {
+		err := DB.Model(&Follow{}).Where(&follow).Update("is_follow", isFollow).Error
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

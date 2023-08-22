@@ -3,6 +3,7 @@ package model
 import (
 	"sync"
 	"time"
+	"utils/snowFlake"
 )
 
 type Message struct {
@@ -36,6 +37,8 @@ func getCurrentTime() (createTime string) {
 
 func (*MessageModel) PostMessage(message *Message) error {
 	message.CreatedAt = getCurrentTime()
+	flake, _ := snowFlake.NewSnowFlake(7, 3)
+	message.Id = flake.NextId()
 	err := DB.Create(&message).Error
 	return err
 }

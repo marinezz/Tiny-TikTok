@@ -83,17 +83,19 @@ func UserInfo(ctx *gin.Context) {
 // GetUserInfo 根据用户id，去调取三个服务，拼接出所有的用户信息
 func GetUserInfo(userIds []int64, ctx *gin.Context) (userInfos []res.User) {
 	var err error
-	var follow []Follow
 	// 构建三个服务的请求
 	var userInfoReq service.UserInfoRequest
 	var countInfoReq service.CountRequest
+	var followInfoReq service.FollowInfoRequest
 
 	userInfoReq.UserIds = userIds
 	countInfoReq.UserIds = userIds
+	followInfoReq.ToUserId = userIds
 
 	// 创建接收三个响应
 	var userResp *service.UserInfoResponse
 	var countInfoResp *service.CountResponse
+	var followInfoResp *service.FollowInfoResponse
 
 	// 分别去调用三个服务
 	var wg sync.WaitGroup
@@ -120,52 +122,27 @@ func GetUserInfo(userIds []int64, ctx *gin.Context) (userInfos []res.User) {
 		defer wg.Done()
 
 		// 拿到当前用户的id，在is_follow找对应关系
-		userIdStr := ctx.Query("user_id")
-		userId, _ := strconv.ParseInt(userIdStr, 10, 64)
+		userIdStr, _ := ctx.Get("user_id")
+		userId, _ := userIdStr.(int64)
+		followInfoReq.UserId = userId
 		socialServiceClient := ctx.Keys["social_service"].(service.SocialServiceClient)
-		for _, id := range userIds {
-			// 是否喜欢
-			var isFollowReq service.IsFollowRequest
-			isFollowReq.UserId = userId
-			isFollowReq.ToUserId = id
-			isFollow, err := socialServiceClient.IsFollow(context.Background(), &isFollowReq)
-			if err != nil {
-				PanicIfFollowError(err)
-			}
-
-			// 关注数
-			var followCountReq service.FollowCountRequest
-			followCountReq.UserId = id
-			followCount, err := socialServiceClient.GetFollowCount(context.Background(), &followCountReq)
-			if err != nil {
-				PanicIfFollowError(err)
-			}
-
-			// 粉丝数
-			followerCount, err := socialServiceClient.GetFollowerCount(context.Background(), &followCountReq)
-			if err != nil {
-				PanicIfFollowError(err)
-			}
-
-			follow = append(follow, Follow{
-				IsFollow:      isFollow.IsFollow,
-				FollowCount:   followCount.FollowCount,
-				FollowerCount: followerCount.FollowerCount,
-			})
+		followInfoResp, err = socialServiceClient.GetFollowInfo(context.Background(), &followInfoReq)
+		if err != nil {
+			PanicIfFollowError(err)
 		}
 	}()
 	wg.Wait()
 
 	// 构建信息userResp.Users[0], countInfoResp.Counts[0])
 	for index, _ := range userIds {
-		userInfos = append(userInfos, BuildUser(userResp.Users[index], countInfoResp.Counts[index], follow[index]))
+		userInfos = append(userInfos, BuildUser(userResp.Users[index], countInfoResp.Counts[index], followInfoResp.FollowInfo[index]))
 	}
 
 	return userInfos
 }
 
 // BuildUser 构建用户信息
-func BuildUser(user *service.User, count *service.Count, follow Follow) res.User {
+func BuildUser(user *service.User, count *service.Count, follow *service.FollowInfo) res.User {
 	return res.User{
 		Id:   user.Id,
 		Name: user.Name,
