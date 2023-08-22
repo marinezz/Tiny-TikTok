@@ -14,13 +14,22 @@ import (
 var Log *logrus.Logger
 
 func init() {
+	// 如果实例存在则不用新建
+	if Log != nil {
+		fileName := getFileDir()
+		witter := rotateLog(fileName)
+		Log.Out = witter
+		return
+	}
 
 	logger := logrus.New()
 	fileName := getFileDir()
-
 	witter := rotateLog(fileName)
 
+	// 设置输出文件
 	logger.Out = witter
+	// 设置日志级别
+	logger.SetLevel(logrus.DebugLevel)
 
 	Log = logger
 }
@@ -49,12 +58,12 @@ func getFileDir() string {
 // 日志本地文件分割
 func rotateLog(fileName string) *rotatelogs.RotateLogs {
 	witter, _ := rotatelogs.New(
-
 		fileName+"%H%M",
-
 		rotatelogs.WithLinkName(fileName),
-		rotatelogs.WithMaxAge(time.Duration(10)*time.Second),
-		rotatelogs.WithRotationTime(time.Duration(5)*time.Second),
+		// 日志最长保留时间
+		rotatelogs.WithMaxAge(time.Duration(12)*time.Hour),
+		// 日志轮转的时间间隔
+		rotatelogs.WithRotationTime(time.Duration(3)*time.Hour),
 	)
 
 	return witter

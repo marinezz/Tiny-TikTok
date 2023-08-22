@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"api_router/pkg/logger"
 	"github.com/pkg/errors"
 )
 
@@ -8,7 +9,7 @@ import (
 func PanicIfVideoError(err error) {
 	if err != nil {
 		err = errors.New("videoService--error--" + err.Error())
-		// Todo 统一的日志处理
+		logger.Log.Info(err)
 		panic(err)
 	}
 }
@@ -17,6 +18,7 @@ func PanicIfVideoError(err error) {
 func PanicIfUserError(err error) {
 	if err != nil {
 		err = errors.New("UserService--error" + err.Error())
+		logger.Log.Info(err)
 		panic(err)
 	}
 }
@@ -25,6 +27,7 @@ func PanicIfUserError(err error) {
 func PanicIfMessageError(err error) {
 	if err != nil {
 		err = errors.New("MessageService--error" + err.Error())
+		logger.Log.Info(err)
 		panic(err)
 	}
 }
@@ -33,6 +36,7 @@ func PanicIfMessageError(err error) {
 func PanicIfFollowError(err error) {
 	if err != nil {
 		err = errors.New("FollowService--error" + err.Error())
+		logger.Log.Info(err)
 		panic(err)
 	}
 }
@@ -41,6 +45,7 @@ func PanicIfFollowError(err error) {
 func PanicIfFavoriteError(err error) {
 	if err != nil {
 		err = errors.New("FavoriteService--error" + err.Error())
+		logger.Log.Info(err)
 		panic(err)
 	}
 }
@@ -49,6 +54,7 @@ func PanicIfFavoriteError(err error) {
 func PanicIfCommentError(err error) {
 	if err != nil {
 		err = errors.New("CommentService--error" + err.Error())
+		logger.Log.Info(err)
 		panic(err)
 	}
 }
