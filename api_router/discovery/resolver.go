@@ -66,9 +66,9 @@ func Resolver() map[string]interface{} {
 	logger.Log.Info("获取社交服务实例--成功--")
 	serveInstance["social_service"] = socialClient
 
-	wrapper.NewServiceWrapper("user_service")
-	wrapper.NewServiceWrapper("video_service")
-	wrapper.NewServiceWrapper("social_service")
+	wrapper.NewWrapper("user_service")
+	wrapper.NewWrapper("video_service")
+	wrapper.NewWrapper("social_service")
 
 	return serveInstance
 }
