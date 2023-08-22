@@ -26,7 +26,7 @@ func Feed(ctx *gin.Context) {
 	}
 
 	latestTime := ctx.Query("latest_time")
-	if latestTime == "" {
+	if latestTime == "" || latestTime == "0" {
 		feedReq.LatestTime = -1
 	} else {
 		timePoint, _ := strconv.ParseInt(latestTime, 10, 64)

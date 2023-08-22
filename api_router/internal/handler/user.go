@@ -15,10 +15,9 @@ import (
 // UserRegister 用户注册
 func UserRegister(ctx *gin.Context) {
 	var userReq service.UserRequest
-	err := ctx.Bind(&userReq)
-	if err != nil {
-		PanicIfUserError(err)
-	}
+
+	userReq.Username = ctx.Query("username")
+	userReq.Password = ctx.Query("password")
 
 	userServiceClient := ctx.Keys["user_service"].(service.UserServiceClient)
 	userResp, err := userServiceClient.UserRegister(context.Background(), &userReq)
