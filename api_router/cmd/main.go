@@ -3,6 +3,7 @@ package main
 import (
 	config "api_router/configs"
 	"api_router/discovery"
+	"api_router/pkg/logger"
 	"api_router/router"
 	"github.com/spf13/viper"
 	"net/http"
@@ -21,5 +22,8 @@ func main() {
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	server.ListenAndServe()
+	err := server.ListenAndServe()
+	if err != nil {
+		logger.Log.Fatal("启动失败...")
+	}
 }

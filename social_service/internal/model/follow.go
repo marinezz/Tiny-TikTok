@@ -20,7 +20,7 @@ type FollowModel struct {
 var followModel *FollowModel
 var followOnce sync.Once // 单例模式
 
-// GetInstance 获取单例实例
+// GetFollowInstance 获取单例实例
 func GetFollowInstance() *FollowModel {
 	followOnce.Do(
 		func() {
