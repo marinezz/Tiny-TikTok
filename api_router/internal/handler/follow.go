@@ -28,7 +28,7 @@ func FollowAction(ctx *gin.Context) {
 	socialServiceClient := ctx.Keys["social_service"].(service.SocialServiceClient)
 	socialResp, err := socialServiceClient.FollowAction(context.Background(), &followAction)
 	if err != nil {
-		panic(err)
+		PanicIfFollowError(err)
 	}
 
 	r := res.FollowActionResponse{
@@ -47,7 +47,7 @@ func GetFollowList(ctx *gin.Context) {
 	socialServiceClient := ctx.Keys["social_service"].(service.SocialServiceClient)
 	socialResp, err := socialServiceClient.GetFollowList(context.Background(), &followList)
 	if err != nil {
-		panic(err)
+		PanicIfFollowError(err)
 	}
 
 	r := res.FollowListResponse{
@@ -66,7 +66,7 @@ func GetFollowerList(ctx *gin.Context) {
 	socialServiceClient := ctx.Keys["social_service"].(service.SocialServiceClient)
 	socialResp, err := socialServiceClient.GetFollowerList(context.Background(), &followerList)
 	if err != nil {
-		panic(err)
+		PanicIfFollowError(err)
 	}
 
 	r := res.FollowListResponse{

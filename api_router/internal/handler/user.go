@@ -15,12 +15,15 @@ import (
 // UserRegister 用户注册
 func UserRegister(ctx *gin.Context) {
 	var userReq service.UserRequest
-	ctx.Bind(&userReq)
+	err := ctx.Bind(&userReq)
+	if err != nil {
+		PanicIfUserError(err)
+	}
 
 	userServiceClient := ctx.Keys["user_service"].(service.UserServiceClient)
 	userResp, err := userServiceClient.UserRegister(context.Background(), &userReq)
 	if err != nil {
-		panic(err)
+		PanicIfUserError(err)
 	}
 	token, _ := auth.GenerateToken(userResp.UserId)
 
@@ -37,12 +40,15 @@ func UserRegister(ctx *gin.Context) {
 // UserLogin 用户登录
 func UserLogin(ctx *gin.Context) {
 	var userReq service.UserRequest
-	ctx.Bind(&userReq)
+	err := ctx.Bind(&userReq)
+	if err != nil {
+		PanicIfUserError(err)
+	}
 
 	userServiceClient := ctx.Keys["user_service"].(service.UserServiceClient)
 	userResp, err := userServiceClient.UserLogin(context.Background(), &userReq)
 	if err != nil {
-		panic(err)
+		PanicIfUserError(err)
 	}
 	token, _ := auth.GenerateToken(userResp.UserId)
 
@@ -71,12 +77,13 @@ func UserInfo(ctx *gin.Context) {
 		StatusMsg:  exception.GetMsg(exception.SUCCESS),
 		User:       GetUserInfo(userIds, ctx)[0],
 	}
-	ctx.JSON(http.StatusOK, r)
 
+	ctx.JSON(http.StatusOK, r)
 }
 
 // GetUserInfo 根据用户id，去调取三个服务，拼接出所有的用户信息
 func GetUserInfo(userIds []int64, ctx *gin.Context) (userInfos []res.User) {
+	var err error
 	// 构建三个服务的请求
 	var userInfoReq service.UserInfoRequest
 	var countInfoReq service.CountRequest
@@ -97,13 +104,19 @@ func GetUserInfo(userIds []int64, ctx *gin.Context) (userInfos []res.User) {
 	go func() {
 		defer wg.Done()
 		userServiceClient := ctx.Keys["user_service"].(service.UserServiceClient)
-		userResp, _ = userServiceClient.UserInfo(context.Background(), &userInfoReq)
+		userResp, err = userServiceClient.UserInfo(context.Background(), &userInfoReq)
+		if err != nil {
+			PanicIfUserError(err)
+		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
-		countInfoResp, _ = videoServiceClient.CountInfo(context.Background(), &countInfoReq)
+		countInfoResp, err = videoServiceClient.CountInfo(context.Background(), &countInfoReq)
+		if err != nil {
+			PanicIfVideoError(err)
+		}
 	}()
 
 	go func() {
@@ -114,7 +127,6 @@ func GetUserInfo(userIds []int64, ctx *gin.Context) (userInfos []res.User) {
 		userId, _ := userIdStr.(int64)
 		followInfoReq.UserId = userId
 		socialServiceClient := ctx.Keys["social_service"].(service.SocialServiceClient)
-
 		followInfoResp, _ = socialServiceClient.GetFollowInfo(context.Background(), &followInfoReq)
 	}()
 	wg.Wait()
@@ -127,8 +139,8 @@ func GetUserInfo(userIds []int64, ctx *gin.Context) (userInfos []res.User) {
 	return userInfos
 }
 
-// BuildUser 构建用户信息 Todo 还有其余信息的构建
-func BuildUser(user *service.User, count *service.Count, follow *service.FollowInfo) res.User {
+// BuildUser 构建用户信息
+func BuildUser(user *service.User, count *service.Count, follow Follow) res.User {
 	return res.User{
 		Id:   user.Id,
 		Name: user.Name,

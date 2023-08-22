@@ -18,17 +18,42 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 	// 点赞操作
 	if action == 1 {
 		// 操作favorite表
-		model.GetFavoriteInstance().AddFavorite(&favorite)
+		isAdd, err := model.GetFavoriteInstance().AddFavorite(&favorite)
+		if err != nil {
+			resp.StatusCode = exception.FavoriteErr
+			resp.StatusMsg = exception.GetMsg(exception.FavoriteErr)
+			return resp, err
+		}
+
 		// 操作video表，喜欢记录 + 1
-		model.GetVideoInstance().AddFavoriteCount(req.VideoId)
+		if isAdd == true {
+			err := model.GetVideoInstance().AddFavoriteCount(req.VideoId)
+			if err != nil {
+				resp.StatusCode = exception.VideoFavoriteErr
+				resp.StatusMsg = exception.GetMsg(exception.VideoFavoriteErr)
+				return resp, err
+			}
+		}
 	}
 
 	// 取消赞操作
 	if action == 2 {
 		// 操作favorite表
-		model.GetFavoriteInstance().DeleteFavorite(&favorite)
+		err, isDelete := model.GetFavoriteInstance().DeleteFavorite(&favorite)
+		if err != nil {
+			resp.StatusCode = exception.CancelFavoriteErr
+			resp.StatusMsg = exception.GetMsg(exception.CancelFavoriteErr)
+			return resp, err
+		}
 		// 操作video表
-		model.GetVideoInstance().DeleteFavoriteCount(req.VideoId)
+		if isDelete == true {
+			err := model.GetVideoInstance().DeleteFavoriteCount(req.VideoId)
+			if err != nil {
+				resp.StatusCode = exception.VideoFavoriteErr
+				resp.StatusMsg = exception.GetMsg(exception.VideoFavoriteErr)
+				return resp, err
+			}
+		}
 	}
 
 	resp.StatusCode = exception.SUCCESS
@@ -43,10 +68,20 @@ func (*VideoService) FavoriteList(ctx context.Context, req *service.FavoriteList
 
 	// 根据用户id找到所有的视频
 	var videoIds []int64
-	videoIds, _ = model.GetFavoriteInstance().FavoriteVideoList(req.UserId)
+	videoIds, err = model.GetFavoriteInstance().FavoriteVideoList(req.UserId)
+	if err != nil {
+		resp.StatusCode = exception.UserNoVideo
+		resp.StatusMsg = exception.GetMsg(exception.UserNoVideo)
+		return resp, err
+	}
 
 	// 根据视频id找到视频的详细信息
-	videos, _ := model.GetVideoInstance().GetVideoList(videoIds)
+	videos, err := model.GetVideoInstance().GetVideoList(videoIds)
+	if err != nil {
+		resp.StatusCode = exception.VideoUnExist
+		resp.StatusMsg = exception.GetMsg(exception.VideoUnExist)
+		return resp, err
+	}
 
 	resp.StatusCode = exception.SUCCESS
 	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)

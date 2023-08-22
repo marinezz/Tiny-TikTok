@@ -78,6 +78,11 @@ type CommentActionResponse struct {
 	Comment    Comment `json:"comment"` // 评论成功返回评论内容，不需要重新拉取整个列表
 }
 
+type CommentDeleteResponse struct {
+	StatusCode int64  `json:"status_code"`
+	StatusMsg  string `json:"status_msg"`
+}
+
 type CommentListResponse struct {
 	StatusCode int64     `json:"status_code"`
 	StatusMsg  string    `json:"status_msg"`

@@ -23,16 +23,41 @@ func (*VideoService) CommentAction(ctx context.Context, req *service.CommentActi
 	// 发布评论
 	if action == 1 {
 		comment.CreatAt = time
-		id, _ := model.GetCommentInstance().CreateComment(&comment)
+
+		tx := model.DB.Begin()
+		defer func() {
+			if r := recover(); r != nil {
+				tx.Rollback()
+			}
+		}()
+
+		// 事务中执行创建操作
+		id, err := model.GetCommentInstance().CreateComment(tx, &comment)
+		if err != nil {
+			tx.Rollback()
+			resp.StatusCode = exception.SUCCESS
+			resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
+			resp.Comment = nil
+			return resp, err
+		}
 
 		// 视频评论数量 + 1
-		model.GetVideoInstance().AddCommentCount(req.VideoId)
+		err = model.GetVideoInstance().AddCommentCount(tx, req.VideoId)
+		if err != nil {
+			tx.Rollback()
+			resp.StatusCode = exception.SUCCESS
+			resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
+			resp.Comment = nil
+			return resp, err
+		}
+
+		tx.Commit()
 
 		commentResp := &service.Comment{
 			Id:      id,
 			Content: req.CommentText,
-			// 将Time.time转换成字符串形式
-			CreateDate: time.Format("2006-01-02 15:04:05"),
+			// 将Time.time转换成字符串形式，格式为mm-dd
+			CreateDate: time.Format("01-02"),
 		}
 
 		// 将评论返回
@@ -44,9 +69,33 @@ func (*VideoService) CommentAction(ctx context.Context, req *service.CommentActi
 	}
 
 	// 删除评论
-	model.GetCommentInstance().DeleteComment(req.CommentId)
+	comment.CreatAt = time
+
+	tx := model.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	err = model.GetCommentInstance().DeleteComment(tx, req.CommentId)
+	if err != nil {
+		resp.StatusCode = exception.CommentDeleteErr
+		resp.StatusMsg = exception.GetMsg(exception.CommentDeleteErr)
+		resp.Comment = nil
+
+		return resp, err
+	}
 	// 视频评论数量 - 1
-	model.GetVideoInstance().DeleteCommentCount(req.VideoId)
+	err = model.GetVideoInstance().DeleteCommentCount(tx, req.VideoId)
+	if err != nil {
+		resp.StatusCode = exception.CommentDeleteErr
+		resp.StatusMsg = exception.GetMsg(exception.CommentDeleteErr)
+		resp.Comment = nil
+
+		return resp, err
+	}
+	tx.Commit()
 
 	resp.StatusCode = exception.SUCCESS
 	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
@@ -60,7 +109,12 @@ func (*VideoService) CommentList(ctx context.Context, req *service.CommentListRe
 	resp = new(service.CommentListResponse)
 
 	// 根据视频id找到所有的评论
-	comments, _ := model.GetCommentInstance().CommentList(req.VideoId)
+	comments, err := model.GetCommentInstance().CommentList(req.VideoId)
+	if err != nil {
+		resp.StatusCode = exception.CommentUnExist
+		resp.StatusMsg = exception.GetMsg(exception.CommentUnExist)
+		return nil, err
+	}
 
 	resp.StatusCode = exception.SUCCESS
 	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
@@ -77,7 +131,7 @@ func BuildComments(comments []model.Comment) []*service.Comment {
 			Id:         comment.Id,
 			UserId:     comment.UserId,
 			Content:    comment.Content,
-			CreateDate: comment.CreatAt.Format("2006-01-02 15:04:05"),
+			CreateDate: comment.CreatAt.Format("01-02"),
 		})
 	}
 

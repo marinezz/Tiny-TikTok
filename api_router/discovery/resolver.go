@@ -4,10 +4,11 @@ package discovery
 
 import (
 	"api_router/internal/service"
+	"api_router/pkg/logger"
+	"api_router/pkg/wrapper"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"log"
 	"utils/etcd"
 )
 
@@ -17,19 +18,19 @@ func Resolver() map[string]interface{} {
 	etcdAddress := viper.GetString("etcd.address")
 	serviceDiscovery, err := etcd.NewServiceDiscovery([]string{etcdAddress})
 	if err != nil {
-		log.Fatal(err)
+		logger.Log.Fatal(err)
 	}
 	defer serviceDiscovery.Close()
 
 	// 获取用户服务实例
 	err = serviceDiscovery.ServiceDiscovery("user_service")
 	if err != nil {
-		log.Fatal(err)
+		logger.Log.Fatal(err)
 	}
 	userServiceAddr, _ := serviceDiscovery.GetService("user_service")
 	userConn, err := grpc.Dial(userServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatal(err)
+		logger.Log.Fatal(err)
 	}
 	userClient := service.NewUserServiceClient(userConn)
 	serveInstance["user_service"] = userClient
@@ -37,12 +38,12 @@ func Resolver() map[string]interface{} {
 	// 获取视频服务实例
 	err = serviceDiscovery.ServiceDiscovery("video_service")
 	if err != nil {
-		log.Fatal(err)
+		logger.Log.Fatal(err)
 	}
 	videoServiceAddr, _ := serviceDiscovery.GetService("video_service")
 	videoConn, err := grpc.Dial(videoServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatal(err)
+		logger.Log.Fatal(err)
 	}
 
 	videoClient := service.NewVideoServiceClient(videoConn)
@@ -51,17 +52,20 @@ func Resolver() map[string]interface{} {
 	// 获取社交服务实例
 	err = serviceDiscovery.ServiceDiscovery("social_service")
 	if err != nil {
-		log.Fatal(err)
+		logger.Log.Fatal(err)
 	}
 	socialServiceAddr, _ := serviceDiscovery.GetService("social_service")
 	socialConn, err := grpc.Dial(socialServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatal(err)
+		logger.Log.Fatal(err)
 	}
 
 	socialClient := service.NewSocialServiceClient(socialConn)
 	serveInstance["social_service"] = socialClient
-	// todo 获取其它服务实例
+
+	wrapper.NewServiceWrapper("user_service")
+	wrapper.NewServiceWrapper("video_service")
+	wrapper.NewServiceWrapper("social_service")
 
 	return serveInstance
 }

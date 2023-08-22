@@ -16,7 +16,25 @@ const (
 	UnAuth       = 1001
 	TokenTimeOut = 1002
 
-	UserExist     = 1100 // 数据库相关
-	UserUnExist   = 1101
-	PasswordError = 1102
+	ErrOperate = 1200 // 异常操作
+
+	DataErr = 2000 // 数据创建
+
+	UserExist     = 2100 // 用户相关
+	UserUnExist   = 2101
+	PasswordError = 2102
+
+	VideoUnExist     = 2200 // 视频相关
+	VideoUploadErr   = 2201
+	VideoFavoriteErr = 2203
+	UserNoVideo      = 2204
+
+	FavoriteErr       = 2300 // 点赞相关
+	CancelFavoriteErr = 2301
+	VideoNoFavorite   = 2302
+	UserNoFavorite    = 2303
+
+	CommentErr       = 2400
+	CommentUnExist   = 2401 // 评论相关
+	CommentDeleteErr = 2402
 )

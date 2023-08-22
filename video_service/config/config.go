@@ -9,6 +9,8 @@ import (
 
 // InitConfig 读取配置文件
 func InitConfig() {
+	// runtime.Caller(0) 用于获取当前源文件的路径，可以根据参数值获取不同调用栈层次的源文件路径。
+	// os.Getwd() 用于获取当前工作目录的路径，不需要参数，始终返回当前程序的工作目录。
 	_, filePath, _, _ := runtime.Caller(0)
 
 	currentDir := path.Dir(filePath)

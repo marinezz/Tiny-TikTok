@@ -44,6 +44,21 @@ func (*VideoModel) Create(video *Video) error {
 	return nil
 }
 
+// DeleteVideoByUrl 删除视频
+func (v *VideoModel) DeleteVideoByUrl(videoUrl string) error {
+	var video Video
+	if err := DB.Where("play_url = ?", videoUrl).First(&video).Error; err != nil {
+		return err
+	}
+
+	// 删除找到的记录
+	if err := DB.Delete(&video).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // GetVideoByTime 根据创建时间获取视频
 func (*VideoModel) GetVideoByTime(timePoint time.Time) ([]Video, error) {
 	var videos []Video
@@ -111,8 +126,8 @@ func (*VideoModel) DeleteFavoriteCount(videoId int64) error {
 }
 
 // AddCommentCount 视频评论数量 + 1
-func (*VideoModel) AddCommentCount(videoId int64) error {
-	result := DB.Model(&Video{}).
+func (*VideoModel) AddCommentCount(tx *gorm.DB, videoId int64) error {
+	result := tx.Model(&Video{}).
 		Where("id = ?", videoId).
 		Update("comment_count", gorm.Expr("comment_count + ?", 1))
 	if result.Error != nil {
@@ -123,8 +138,8 @@ func (*VideoModel) AddCommentCount(videoId int64) error {
 }
 
 // DeleteCommentCount 视频评论数量 - 1
-func (*VideoModel) DeleteCommentCount(videoId int64) error {
-	result := DB.Model(&Video{}).
+func (*VideoModel) DeleteCommentCount(tx *gorm.DB, videoId int64) error {
+	result := tx.Model(&Video{}).
 		Where("id = ?", videoId).
 		Update("comment_count", gorm.Expr("comment_count - ?", 1))
 	if result.Error != nil {

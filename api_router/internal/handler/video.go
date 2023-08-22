@@ -4,10 +4,10 @@ import (
 	"api_router/internal/service"
 	"api_router/pkg/res"
 	"context"
-	"errors"
+
 	"github.com/gin-gonic/gin"
 	"io"
-	"log"
+
 	"net/http"
 	"strconv"
 )
@@ -34,7 +34,10 @@ func Feed(ctx *gin.Context) {
 	}
 
 	videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
-	feedResp, _ := videoServiceClient.Feed(context.Background(), &feedReq)
+	feedResp, err := videoServiceClient.Feed(context.Background(), &feedReq)
+	if err != nil {
+		PanicIfVideoError(err)
+	}
 
 	var userIds []int64
 	for _, video := range feedResp.VideoList {
@@ -68,17 +71,20 @@ func PublishAction(ctx *gin.Context) {
 	formFile, _ := ctx.FormFile("data")
 	file, err := formFile.Open()
 	if err != nil {
-		PanicIfPublishError(err)
+		PanicIfVideoError(err)
 	}
 	defer file.Close()
 	buf, err := io.ReadAll(file) // 将文件读取到字节切片buf中
 	if err != nil {
-		PanicIfPublishError(err)
+		PanicIfVideoError(err)
 	}
 	publishActionReq.Data = buf
 
 	videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
-	videoServiceResp, _ := videoServiceClient.PublishAction(context.Background(), &publishActionReq)
+	videoServiceResp, err := videoServiceClient.PublishAction(context.Background(), &publishActionReq)
+	if err != nil {
+		PanicIfVideoError(err)
+	}
 
 	r := res.PublishActionResponse{
 		StatusCode: videoServiceResp.StatusCode,
@@ -98,7 +104,10 @@ func PublishList(ctx *gin.Context) {
 	pulishListReq.UserId = userId
 
 	videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
-	publishListResp, _ := videoServiceClient.PublishList(context.Background(), &pulishListReq)
+	publishListResp, err := videoServiceClient.PublishList(context.Background(), &pulishListReq)
+	if err != nil {
+		PanicIfVideoError(err)
+	}
 
 	var userIds []int64
 	for _, video := range publishListResp.VideoList {
@@ -138,14 +147,4 @@ func BuildVideoList(videos []*service.Video, userInfos []res.User) []res.Video {
 	}
 
 	return videoList
-}
-
-// PanicIfPublishError 错误处理
-func PanicIfPublishError(err error) {
-	if err != nil {
-		err = errors.New("publishService--error--" + err.Error())
-		// Todo 统一的日志处理
-		log.Print(err)
-		panic(err)
-	}
 }

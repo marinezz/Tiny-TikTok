@@ -23,18 +23,27 @@ func (*UserService) UserRegister(ctx context.Context, req *service.UserRequest) 
 	if exist := model.GetInstance().CheckUserExist(req.Username); !exist {
 		resp.StatusCode = exception.UserExist
 		resp.StatusMsg = exception.GetMsg(exception.UserExist)
-		resp.UserId = -1
-		return resp, nil
+		return resp, err
 	}
-	// Todo 在api层验证数据的有效性
+
 	user.UserName = req.Username
 	user.PassWord = req.Password
 
 	// 创建用户
 	err = model.GetInstance().Create(&user)
+	if err != nil {
+		resp.StatusCode = exception.DataErr
+		resp.StatusMsg = exception.GetMsg(exception.DataErr)
+		return resp, err
+	}
 
 	// 查询出ID
-	userName, _ := model.GetInstance().FindUserByName(user.UserName)
+	userName, err := model.GetInstance().FindUserByName(user.UserName)
+	if err != nil {
+		resp.StatusCode = exception.UserUnExist
+		resp.StatusMsg = exception.GetMsg(exception.UserUnExist)
+		return resp, err
+	}
 
 	resp.StatusCode = exception.SUCCESS
 	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
@@ -50,8 +59,7 @@ func (*UserService) UserLogin(ctx context.Context, req *service.UserRequest) (re
 	if exist := model.GetInstance().CheckUserExist(req.Username); exist {
 		resp.StatusCode = exception.UserUnExist
 		resp.StatusMsg = exception.GetMsg(exception.UserUnExist)
-		resp.UserId = -1
-		return resp, nil
+		return resp, err
 	}
 
 	// 检查密码是否正确
@@ -59,8 +67,7 @@ func (*UserService) UserLogin(ctx context.Context, req *service.UserRequest) (re
 	if ok := model.GetInstance().CheckPassWord(req.Password, user.PassWord); !ok {
 		resp.StatusCode = exception.PasswordError
 		resp.StatusMsg = exception.GetMsg(exception.PasswordError)
-		resp.UserId = -1
-		return resp, nil
+		return resp, err
 	}
 
 	resp.StatusCode = exception.SUCCESS
@@ -78,7 +85,12 @@ func (*UserService) UserInfo(ctx context.Context, req *service.UserInfoRequest) 
 	userIds := req.UserIds
 
 	for _, userId := range userIds {
-		user, _ := model.GetInstance().FindUserById(userId)
+		user, err := model.GetInstance().FindUserById(userId)
+		if err != nil {
+			resp.StatusCode = exception.UserUnExist
+			resp.StatusMsg = exception.GetMsg(exception.UserUnExist)
+			return resp, err
+		}
 		resp.Users = append(resp.Users, BuildUser(user))
 	}
 

@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+	"utils/exception"
 )
 
 // FavoriteAction 喜欢操作
@@ -18,20 +19,34 @@ func FavoriteAction(ctx *gin.Context) {
 	// string转int64
 	videoId := ctx.PostForm("video_id")
 	favoriteActionReq.VideoId, _ = strconv.ParseInt(videoId, 10, 64)
-	// string转int32
+
 	actionType := ctx.PostForm("action_type")
 	actionTypeValue, _ := strconv.Atoi(actionType)
-	favoriteActionReq.ActionType = int64(actionTypeValue)
 
-	videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
-	videoServiceResp, _ := videoServiceClient.FavoriteAction(context.Background(), &favoriteActionReq)
+	// 异常操作
+	if actionTypeValue == 1 || actionTypeValue == 2 {
+		favoriteActionReq.ActionType = int64(actionTypeValue)
 
-	r := res.FavoriteActionResponse{
-		StatusCode: videoServiceResp.StatusCode,
-		StatusMsg:  videoServiceResp.StatusMsg,
+		videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
+		videoServiceResp, err := videoServiceClient.FavoriteAction(context.Background(), &favoriteActionReq)
+		if err != nil {
+			PanicIfFavoriteError(err)
+		}
+
+		r := res.FavoriteActionResponse{
+			StatusCode: videoServiceResp.StatusCode,
+			StatusMsg:  videoServiceResp.StatusMsg,
+		}
+
+		ctx.JSON(http.StatusOK, r)
+	} else {
+		r := res.FavoriteActionResponse{
+			StatusCode: exception.ErrOperate,
+			StatusMsg:  exception.GetMsg(exception.ErrOperate),
+		}
+
+		ctx.JSON(http.StatusOK, r)
 	}
-
-	ctx.JSON(http.StatusOK, r)
 }
 
 func FavoriteList(ctx *gin.Context) {
@@ -43,7 +58,10 @@ func FavoriteList(ctx *gin.Context) {
 	favoriteListReq.UserId = userId
 
 	videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)
-	favoriteListResp, _ := videoServiceClient.FavoriteList(context.Background(), &favoriteListReq)
+	favoriteListResp, err := videoServiceClient.FavoriteList(context.Background(), &favoriteListReq)
+	if err != nil {
+		PanicIfFavoriteError(err)
+	}
 
 	// 找到所有的用户Id
 	var userIds []int64
