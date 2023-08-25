@@ -14,3 +14,6 @@ mysql:
 
 etcd:
   address: 127.0.0.1:2379
+
+redis:
+  address: 127.0.0.1:6379
