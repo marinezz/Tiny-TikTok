@@ -1,3 +1,23 @@
+<h1 align = "center">Tiny-TikTok</h1>
+
+<p align="center">
+    <a href="https://img.shields.io/badge/lan-go-green">
+        <img alt="Static Badge" src="https://img.shields.io/badge/lan-go-green">
+    </a>
+    <a href="https://img.shields.io/badge/web-gin-blue">
+       <img alt="Static Badge" src="https://img.shields.io/badge/web-gin-blue">
+    </a>
+	<a href="https://img.shields.io/badge/orm-gorm-yellow">
+       <img alt="Static Badge" src="https://img.shields.io/badge/orm-gorm-yellow">
+    </a>
+	<a href="https://img.shields.io/badge/database-MySQL-red">
+       <img alt="Static Badge" src="https://img.shields.io/badge/database-MySQL-red">
+    </a>
+	<a href="https://img.shields.io/badge/cache-Redis-pink">
+       <img alt="Static Badge" src="https://img.shields.io/badge/cache-Redis-pink">
+    </a>
+</p>
+
 ## 1 项目介绍
 
 ### 1.1 概述
@@ -16,7 +36,7 @@ Marine
 
 ![image](https://github.com/marinezz/Tiny-TikTok/blob/main/docs/image/技术架构图.png)
 
-* ``Gin：``Web框架。高性能、轻量级、简洁，被广泛用于构建RESTful API、网站和其它HTTP服务
+* **Gin：**Web框架。高性能、轻量级、简洁，被广泛用于构建RESTful API、网站和其它HTTP服务
 
 *  **JWT：**用于身份的验证和授权，具有跨平台、无状态的优点，不需要再会话中保存任何信息，减轻服务器的负担
 
