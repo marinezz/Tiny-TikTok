@@ -14,10 +14,9 @@ Marine
 ## 2 项目概览
 
 ### 2.1 技术选型与设计
+[img](https://v1rwxew1bdp.feishu.cn/space/api/box/stream/download/asynccode/?code=MmJlMjRhMzJjZDc0OGNjYTIyY2JhOGQzMGQ2YmM1OGRfT2NKdmZWYkVnalpxbHBmeUtCTE1HUnB3djY2SEtUYW5fVG9rZW46U2kxbGJQOVE3b0hOWnB4M1p4bWNJZ2pKbjliXzE2OTE3NTA4MTg6MTY5MTc1NDQxOF9WNA)
 
-![img](https://v1rwxew1bdp.feishu.cn/space/api/box/stream/download/asynccode/?code=MmJlMjRhMzJjZDc0OGNjYTIyY2JhOGQzMGQ2YmM1OGRfT2NKdmZWYkVnalpxbHBmeUtCTE1HUnB3djY2SEtUYW5fVG9rZW46U2kxbGJQOVE3b0hOWnB4M1p4bWNJZ2pKbjliXzE2OTE3NTA4MTg6MTY5MTc1NDQxOF9WNA)
-
-* **Gin：**Web框架。高性能、轻量级、简洁，被广泛用于构建RESTful API、网站和其它HTTP服务
+* Gin：Web框架。高性能、轻量级、简洁，被广泛用于构建RESTful API、网站和其它HTTP服务
 
 * **JWT：**用于身份的验证和授权，具有跨平台、无状态的优点，不需要再会话中保存任何信息，减轻服务器的负担
 
