@@ -77,7 +77,7 @@ func (*UserService) UserLogin(ctx context.Context, req *service.UserRequest) (re
 	return resp, nil
 }
 
-// UserInfo 用户信息 Todo：可以把查询到的用户放入redis中
+// UserInfo 用户信息
 func (*UserService) UserInfo(ctx context.Context, req *service.UserInfoRequest) (resp *service.UserInfoResponse, err error) {
 	resp = new(service.UserInfoResponse)
 
@@ -85,6 +85,7 @@ func (*UserService) UserInfo(ctx context.Context, req *service.UserInfoRequest) 
 	userIds := req.UserIds
 
 	for _, userId := range userIds {
+		//  Todo 查看缓存
 		user, err := model.GetInstance().FindUserById(userId)
 		if err != nil {
 			resp.StatusCode = exception.UserUnExist
