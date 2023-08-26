@@ -17,7 +17,7 @@ Marine
 
 [![image-20230817120343728](D:\Project\go_projcet\Tiny_TikTok\Tiny-TikTok\README.assets\image-20230817120343728.png)](https://github.com/marinezz/Tiny-TikTok/blob/main/docs/image/%E6%8A%80%E6%9C%AF%E6%9E%B6%E6%9E%84%E5%9B%BE.png?raw=true)
 
-* __Gin：__Web框架。高性能、轻量级、简洁，被广泛用于构建RESTful API、网站和其它HTTP服务
+* ``Gin：``Web框架。高性能、轻量级、简洁，被广泛用于构建RESTful API、网站和其它HTTP服务
 
 *  **JWT：**用于身份的验证和授权，具有跨平台、无状态的优点，不需要再会话中保存任何信息，减轻服务器的负担
 
