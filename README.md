@@ -1,4 +1,3 @@
-# Tiny-TikTok
 ## 1 项目介绍
 
 ### 1.1 概述
@@ -15,7 +14,7 @@ Marine
 
 ### 2.1 技术选型与设计
 
-[![image-20230817120343728](D:\Project\go_projcet\Tiny_TikTok\Tiny-TikTok\README.assets\image-20230817120343728.png)](https://github.com/marinezz/Tiny-TikTok/blob/main/docs/image/%E6%8A%80%E6%9C%AF%E6%9E%B6%E6%9E%84%E5%9B%BE.png?raw=true)
+![image](https://github.com/marinezz/Tiny-TikTok/blob/main/docs/image/技术架构图.png)
 
 * **Gin：**Web框架。高性能、轻量级、简洁，被广泛用于构建RESTful API、网站和其它HTTP服务
 
@@ -41,7 +40,7 @@ Marine
 
 ### 2.2 总体设计
 
-https://github.com/marinezz/Tiny-TikTok/blob/main/docs/image/%E6%8A%80%E6%9C%AF%E6%9E%B6%E6%9E%84%E5%9B%BE.png?raw=true
+![image](https://github.com/marinezz/Tiny-TikTok/blob/main/docs/image/%E6%80%BB%E4%BD%93%E8%AE%BE%E8%AE%A1%E5%9B%BE.png)
 
 * 请求到达服务器前会对token进行校验
 * 通过Api_Router对外暴露接口，进入服务，网关微服务对其它服务进行服务熔断和服务限流
@@ -123,7 +122,7 @@ https://github.com/marinezz/Tiny-TikTok/blob/main/docs/image/%E6%8A%80%E6%9C%AF%
 
 ### 2.4 数据库设计
 
-![image-20230817120402701](D:\Project\go_projcet\Tiny_TikTok\Tiny-TikTok\README.assets\image-20230817120402701.png)
+![image](https://github.com/marinezz/Tiny-TikTok/blob/main/docs/image/数据库设计图.png)
 
 **用户表：**用于存储用户名称、密码、头像、背景、用户简介信息，以由雪花算法生成的分布式id作为主键（其余表的ID同理），密码由bcrypt函数进行加密。
 
