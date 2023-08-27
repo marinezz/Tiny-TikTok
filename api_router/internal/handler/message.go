@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func PostMessage(ctx *gin.Context) {
@@ -61,12 +62,13 @@ func GetMessage(ctx *gin.Context) {
 	r.StatusCode = socialResp.StatusCode
 	r.StatusMsg = socialResp.StatusMsg
 	for _, message := range socialResp.Message {
+		createTime, _ := time.Parse("2006-01-02 15:04:05", message.CreatedAt)
 		messageResp := res.Message{
 			Id:         message.Id,
 			ToUserId:   message.ToUserId,
 			FromUserID: message.UserId,
 			Content:    message.Content,
-			CreateTime: message.CreatedAt,
+			CreateTime: createTime.Unix(),
 		}
 		r.MessageList = append(r.MessageList, messageResp)
 	}
