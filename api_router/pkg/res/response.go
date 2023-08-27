@@ -19,10 +19,10 @@ type User struct {
 }
 
 type Comment struct {
+	Id         int64  `json:"id"` // 评论id
+	User       User   `json:"user"`
 	Content    string `json:"content"`     // 评论内容
 	CreateDate string `json:"create_date"` // 评论发布日期，格式 mm-dd
-	Id         int64  `json:"id"`          // 评论id
-	User       User   `json:"user"`
 }
 
 type Video struct {
