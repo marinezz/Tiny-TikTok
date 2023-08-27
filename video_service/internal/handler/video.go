@@ -82,7 +82,7 @@ func (*VideoService) PublishAction(ctx context.Context, req *service.PublishActi
 		// 上传视频
 		updataErr = third_party.Upload(videoDir, req.Data)
 		// 获取封面,获取第几秒的封面
-		coverByte, _ := cut.Cover(videoUrl, "00:00:01")
+		coverByte, _ := cut.Cover(videoUrl, "00:00:03")
 		// 上传封面
 		updataErr = third_party.Upload(pictureDir, coverByte)
 		log.Print("上传成功")
