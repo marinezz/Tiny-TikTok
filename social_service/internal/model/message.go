@@ -44,6 +44,8 @@ func (*MessageModel) PostMessage(message *Message) error {
 }
 
 func (*MessageModel) GetMessage(UserId int64, ToUserID int64, messages *[]Message) error {
-	err := DB.Model(&Message{}).Where(&Message{UserId: UserId, ToUserId: ToUserID}).Order("created_at").Find(messages).Error
+	err := DB.Model(&Message{}).Where(&Message{UserId: UserId, ToUserId: ToUserID}).
+		Or(&Message{UserId: ToUserID, ToUserId: UserId}).
+		Order("created_at").Find(messages).Error
 	return err
 }
