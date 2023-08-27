@@ -72,6 +72,20 @@ func (*VideoModel) GetVideoByTime(timePoint time.Time) ([]Video, error) {
 		return nil, result.Error
 	}
 
+	// 查询不到数据，就返回当前时间最新的30条数据
+	if len(videos) == 0 {
+		timePoint = time.Now()
+		result := DB.Table("video").
+			Where("creat_at < ?", timePoint).
+			Order("creat_at DESC").
+			Limit(30).
+			Find(&videos)
+		if result.Error != nil {
+			return nil, result.Error
+		}
+		return videos, nil
+	}
+
 	return videos, nil
 }
 
