@@ -30,7 +30,7 @@ func (*VideoService) Feed(ctx context.Context, req *service.FeedRequest) (resp *
 	if req.LatestTime == -1 {
 		timePoint = time.Now()
 	} else {
-		timePoint = time.Unix(req.LatestTime, 0)
+		timePoint = time.Unix(req.LatestTime/1000, 0)
 	}
 
 	// 根据时间获取视频
