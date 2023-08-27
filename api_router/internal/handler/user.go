@@ -39,13 +39,21 @@ func UserRegister(ctx *gin.Context) {
 // UserLogin 用户登录
 func UserLogin(ctx *gin.Context) {
 	var userReq service.UserRequest
-	err := ctx.Bind(&userReq)
-	if err != nil {
-		PanicIfUserError(err)
+	//err := ctx.Bind(&userReq)
+	//if err != nil {
+	//	PanicIfUserError(err)
+	//}
+	userName := ctx.Query("username")
+	if userName == "" {
+		userName = ctx.PostForm("username")
 	}
+	userReq.Username = userName
 
-	//userReq.Username = ctx.Query("username")
-	//userReq.Password = ctx.Query("password")
+	passWord := ctx.Query("password")
+	if userName == "" {
+		passWord = ctx.PostForm("password")
+	}
+	userReq.Password = passWord
 
 	userServiceClient := ctx.Keys["user_service"].(service.UserServiceClient)
 	userResp, err := userServiceClient.UserLogin(context.Background(), &userReq)
