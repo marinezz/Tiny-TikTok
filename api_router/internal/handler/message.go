@@ -14,11 +14,21 @@ func PostMessage(ctx *gin.Context) {
 	userId, _ := ctx.Get("user_id")
 	postMessage.UserId, _ = userId.(int64)
 	toUserId := ctx.PostForm("to_user_id")
+	if toUserId == "" {
+		toUserId = ctx.Query("to_user_id")
+	}
 	postMessage.ToUserId, _ = strconv.ParseInt(toUserId, 10, 64)
 	actionType := ctx.PostForm("action_type")
+	if actionType == "" {
+		actionType = ctx.Query("action_type")
+	}
 	actionTypeInt64, _ := strconv.ParseInt(actionType, 10, 32)
 	postMessage.ActionType = int32(actionTypeInt64)
-	postMessage.Content = ctx.PostForm("content")
+	content := ctx.PostForm("content")
+	if content == "" {
+		content = ctx.Query("content")
+	}
+	postMessage.Content = content
 
 	socialServiceClient := ctx.Keys["social_service"].(service.SocialServiceClient)
 	socialResp, err := socialServiceClient.PostMessage(context.Background(), &postMessage)

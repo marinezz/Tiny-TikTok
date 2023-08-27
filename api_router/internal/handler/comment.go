@@ -17,17 +17,30 @@ func CommentAction(ctx *gin.Context) {
 	commentActionReq.UserId, _ = userId.(int64)
 
 	videoId := ctx.PostForm("video_id")
+	if videoId == "" {
+		videoId = ctx.Query("video_id")
+	}
 	commentActionReq.VideoId, _ = strconv.ParseInt(videoId, 10, 64)
 
 	actionType := ctx.PostForm("action_type")
+	if actionType == "" {
+		actionType = ctx.Query("action_type")
+	}
 	actionTypeValue, _ := strconv.Atoi(actionType)
 	commentActionReq.ActionType = int64(actionTypeValue)
 
 	// 评论操作
 	if commentActionReq.ActionType == 1 {
-		commentActionReq.CommentText = ctx.PostForm("comment_text")
+		commentText := ctx.PostForm("comment_text")
+		if commentText == "" {
+			commentText = ctx.Query("comment_text")
+		}
+		commentActionReq.CommentText = commentText
 	} else {
 		commentId := ctx.PostForm("comment_id")
+		if commentId == "" {
+			commentId = ctx.Query("comment_id")
+		}
 		commentActionReq.CommentId, _ = strconv.ParseInt(commentId, 10, 64)
 	}
 

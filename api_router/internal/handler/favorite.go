@@ -18,9 +18,15 @@ func FavoriteAction(ctx *gin.Context) {
 	favoriteActionReq.UserId, _ = userId.(int64)
 	// string转int64
 	videoId := ctx.PostForm("video_id")
+	if videoId == "" {
+		videoId = ctx.Query("video_id")
+	}
 	favoriteActionReq.VideoId, _ = strconv.ParseInt(videoId, 10, 64)
 
 	actionType := ctx.PostForm("action_type")
+	if actionType == "" {
+		actionType = ctx.Query("action_type")
+	}
 	actionTypeValue, _ := strconv.Atoi(actionType)
 
 	// 异常操作
