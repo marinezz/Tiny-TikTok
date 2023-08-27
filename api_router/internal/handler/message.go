@@ -50,6 +50,8 @@ func GetMessage(ctx *gin.Context) {
 	getMessage.UserId, _ = userId.(int64)
 	toUserId := ctx.Query("to_user_id")
 	getMessage.ToUserId, _ = strconv.ParseInt(toUserId, 10, 64)
+	PreMsgTime := ctx.Query("pre_msg_time")
+	getMessage.PreMsgTime, _ = strconv.ParseInt(PreMsgTime, 10, 64)
 
 	socialServiceClient := ctx.Keys["social_service"].(service.SocialServiceClient)
 	socialResp, err := socialServiceClient.GetMessage(context.Background(), &getMessage)

@@ -43,9 +43,9 @@ func (*MessageModel) PostMessage(message *Message) error {
 	return err
 }
 
-func (*MessageModel) GetMessage(UserId int64, ToUserID int64, messages *[]Message) error {
+func (*MessageModel) GetMessage(UserId int64, ToUserID int64, PreMsgTime int64, messages *[]Message) error {
 	err := DB.Model(&Message{}).Where(&Message{UserId: UserId, ToUserId: ToUserID}).
-		Or(&Message{UserId: ToUserID, ToUserId: UserId}).
+		Or(&Message{UserId: ToUserID, ToUserId: UserId}).Where("created_at > ?", time.Unix(PreMsgTime, 0).Format("2006-01-02 15:04:05")).
 		Order("created_at").Find(messages).Error
 	return err
 }

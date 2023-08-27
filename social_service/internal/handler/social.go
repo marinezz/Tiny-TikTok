@@ -63,7 +63,7 @@ func (*SocialService) GetFollowerList(ctx context.Context, req *service.FollowLi
 
 func (*SocialService) GetFriendList(ctx context.Context, req *service.FollowListRequest) (resp *service.FollowListResponse, err error) {
 	resp = new(service.FollowListResponse)
-	err = model.GetFollowInstance().GetFollowerList(req.UserId, &resp.UserId)
+	err = model.GetFollowInstance().GetFriendList(req.UserId, &resp.UserId)
 	if err != nil {
 		resp.StatusCode = exception.ERROR
 		resp.StatusMsg = exception.GetMsg(exception.ERROR)
@@ -117,7 +117,7 @@ func (*SocialService) PostMessage(ctx context.Context, req *service.PostMessageR
 func (*SocialService) GetMessage(ctx context.Context, req *service.GetMessageRequest) (resp *service.GetMessageResponse, err error) {
 	resp = new(service.GetMessageResponse)
 	var messages []model.Message
-	err = model.GetMessageInstance().GetMessage(req.UserId, req.ToUserId, &messages)
+	err = model.GetMessageInstance().GetMessage(req.UserId, req.ToUserId, req.PreMsgTime, &messages)
 	if err != nil {
 		resp.StatusCode = exception.ERROR
 		resp.StatusMsg = exception.GetMsg(exception.ERROR)

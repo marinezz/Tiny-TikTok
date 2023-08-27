@@ -47,6 +47,17 @@ func TestFollowModel_GetFollowerList(t *testing.T) {
 	fmt.Printf("%d的粉丝有%#v\n", reqUser, UserId)
 }
 
+func TestFollowModel_GetFriendList(t *testing.T) {
+	InitDb()
+	var UserId []int64
+	var reqUser int64
+	reqUser = 2
+	if err := GetFollowInstance().GetFriendList(reqUser, &UserId); err != nil {
+		panic(nil)
+	}
+	fmt.Printf("%d的好友有%#v\n", reqUser, UserId)
+}
+
 func TestFollowModel_GetFollowCount(t *testing.T) {
 	InitDb()
 	var cnt int64

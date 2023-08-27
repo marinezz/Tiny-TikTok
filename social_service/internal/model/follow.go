@@ -90,6 +90,15 @@ func (*FollowModel) GetFollowerList(reqUser int64, UserId *[]int64) error {
 	return nil
 }
 
+func (*FollowModel) GetFriendList(reqUser int64, UserId *[]int64) error {
+
+	if err := DB.Raw("select a.to_user_id from follow as a inner join follow as b on a.user_id = b.to_user_id and a.to_user_id = b.user_id and a.is_follow = 1 and b.is_follow = 1 and a.user_id = ?", reqUser).Scan(UserId).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (*FollowModel) GetFollowCount(reqUser int64) (int64, error) {
 	var cnt int64
 	if err := DB.Model(&Follow{}).Where(&Follow{UserId: reqUser, IsFollow: 1}).Count(&cnt).Error; err != nil {

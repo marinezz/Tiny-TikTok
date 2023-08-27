@@ -87,6 +87,8 @@ message GetMessageRequest{
   int64 UserId = 1;
   // @gotags:json:"to_user_id" form:"to_user_id" uri:"to_user_id"
   int64 ToUserId = 2;
+  // @gotags:json:"pre_msg_time" form:"pre_msg_time" uri:"pre_msg_time"
+  int64 preMsgTime=3;
 }
 
 message Message{
