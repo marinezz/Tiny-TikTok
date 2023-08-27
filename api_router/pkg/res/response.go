@@ -86,7 +86,7 @@ type CommentDeleteResponse struct {
 type CommentListResponse struct {
 	StatusCode int64     `json:"status_code"`
 	StatusMsg  string    `json:"status_msg"`
-	Comments   []Comment `json:"comment"`
+	Comments   []Comment `json:"comment_list"`
 }
 
 type FollowActionResponse struct {
