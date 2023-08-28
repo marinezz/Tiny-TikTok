@@ -33,7 +33,11 @@ func UserRegister(ctx *gin.Context) {
 	if err != nil {
 		PanicIfUserError(err)
 	}
-	token, _ := auth.GenerateToken(userResp.UserId)
+
+	token := ""
+	if userResp.UserId != 0 {
+		token, _ = auth.GenerateToken(userResp.UserId)
+	}
 
 	r := res.UserResponse{
 		StatusCode: userResp.StatusCode,
@@ -69,7 +73,11 @@ func UserLogin(ctx *gin.Context) {
 	if err != nil {
 		PanicIfUserError(err)
 	}
-	token, _ := auth.GenerateToken(userResp.UserId)
+
+	token := ""
+	if userResp.UserId != 0 {
+		token, _ = auth.GenerateToken(userResp.UserId)
+	}
 
 	r := res.UserResponse{
 		StatusCode: userResp.StatusCode,
