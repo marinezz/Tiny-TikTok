@@ -32,6 +32,14 @@ CREATE TABLE `video` (
  /*
   消息表
   */
+CREATE TABLE `message` (
+   `id` bigint NOT NULL AUTO_INCREMENT,
+   `user_id` bigint DEFAULT NULL,
+   `to_user_id` bigint DEFAULT NULL,
+   `message` varchar(256) DEFAULT NULL,
+   `created_at` varchar(256) DEFAULT NULL,
+   PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
 
 /*
@@ -62,3 +70,10 @@ CREATE TABLE `favorite` (
 /*
  关注表
  */
+CREATE TABLE `follow` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` bigint DEFAULT NULL,
+  `to_user_id` bigint DEFAULT NULL,
+  `is_follow` int DEFAULT (2),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7638289369411586 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
