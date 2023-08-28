@@ -11,7 +11,7 @@ type Message struct {
 	UserId    int64
 	ToUserId  int64
 	Message   string
-	CreatedAt string
+	CreatedAt int64
 }
 
 type MessageModel struct {
@@ -30,8 +30,8 @@ func GetMessageInstance() *MessageModel {
 	return messageModel
 }
 
-func getCurrentTime() (createTime string) {
-	createTime = time.Now().Format("2006-01-02 15:04:05")
+func getCurrentTime() (createTime int64) {
+	createTime = time.Now().Unix()
 	return
 }
 
@@ -44,8 +44,8 @@ func (*MessageModel) PostMessage(message *Message) error {
 }
 
 func (*MessageModel) GetMessage(UserId int64, ToUserID int64, PreMsgTime int64, messages *[]Message) error {
-	err := DB.Model(&Message{}).Where(&Message{UserId: UserId, ToUserId: ToUserID}).
-		Or(&Message{UserId: ToUserID, ToUserId: UserId}).Where("created_at > ?", time.Unix(PreMsgTime, 0).Format("2006-01-02 15:04:05")).
+	err := DB.Model(&Message{}).Where(DB.Model(&Message{}).Where(&Message{UserId: UserId, ToUserId: ToUserID}).
+		Or(&Message{UserId: ToUserID, ToUserId: UserId})).Where("created_at > ?", PreMsgTime).
 		Order("created_at").Find(messages).Error
 	return err
 }
