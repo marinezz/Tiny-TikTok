@@ -76,3 +76,22 @@ func GetFollowerList(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, r)
 }
+
+func GetFriendList(ctx *gin.Context) {
+	var friendList service.FollowListRequest
+	userId := ctx.Query("user_id")
+	friendList.UserId, _ = strconv.ParseInt(userId, 10, 64)
+
+	socialServiceClient := ctx.Keys["social_service"].(service.SocialServiceClient)
+	socialResp, err := socialServiceClient.GetFriendList(context.Background(), &friendList)
+	if err != nil {
+		PanicIfFollowError(err)
+	}
+
+	r := res.FollowListResponse{
+		StatusCode: socialResp.StatusCode,
+		StatusMsg:  socialResp.StatusMsg,
+		UserList:   GetUserInfo(socialResp.UserId, ctx),
+	}
+	ctx.JSON(http.StatusOK, r)
+}
