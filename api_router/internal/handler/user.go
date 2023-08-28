@@ -16,8 +16,17 @@ import (
 func UserRegister(ctx *gin.Context) {
 	var userReq service.UserRequest
 
-	userReq.Username = ctx.Query("username")
-	userReq.Password = ctx.Query("password")
+	userName := ctx.PostForm("username")
+	if userName == "" {
+		userName = ctx.Query("username")
+	}
+	userReq.Username = userName
+
+	passWord := ctx.PostForm("username")
+	if passWord == "" {
+		passWord = ctx.Query("password")
+	}
+	userReq.Password = passWord
 
 	userServiceClient := ctx.Keys["user_service"].(service.UserServiceClient)
 	userResp, err := userServiceClient.UserRegister(context.Background(), &userReq)
