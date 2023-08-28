@@ -156,13 +156,15 @@
 
 ## 3 详细设计
 
-详细设计参考答辩文档：
+本部分包含：xxxx等的设计
+
+详细设计参考答辩文档：[说明文档](https://v1rwxew1bdp.feishu.cn/docx/ATJPdobcOouDDLxVHsycpANMnig?from=from_copylink)
 
 
 
 ## 4 测试
 
-测试参考测试文档：
+测试参考测试文档：[测试报告](https://v1rwxew1bdp.feishu.cn/docx/ATJPdobcOouDDLxVHsycpANMnig?contentTheme=DARK&theme=LIGHT#ZFYRdVRcBoOsnYxSgDAchR2Dn0c)
 
 
 
