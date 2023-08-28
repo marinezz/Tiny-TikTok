@@ -8,7 +8,7 @@ import (
 func TestMessageModel_GetMessage(t *testing.T) {
 	InitDb()
 	var messages []Message
-	err := GetMessageInstance().GetMessage(1, 2, &messages)
+	err := GetMessageInstance().GetMessage(5155317378584576, 5155644223918080, 16, &messages)
 	if err != nil {
 		panic(err)
 	}

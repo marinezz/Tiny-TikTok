@@ -19,15 +19,9 @@ func FollowAction(ctx *gin.Context) {
 	var followAction service.FollowRequest
 	userId, _ := ctx.Get("user_id")
 	followAction.UserId, _ = userId.(int64)
-	toUserId := ctx.PostForm("to_user_id")
-	if toUserId == "" {
-		toUserId = ctx.Query("to_user_id")
-	}
+	toUserId := ctx.Query("to_user_id")
 	followAction.ToUserId, _ = strconv.ParseInt(toUserId, 10, 64)
-	actionType := ctx.PostForm("action_type")
-	if actionType == "" {
-		ctx.Query("action_type")
-	}
+	actionType := ctx.Query("action_type")
 	actionTypeInt64, _ := strconv.ParseInt(actionType, 10, 32)
 	followAction.ActionType = int32(actionTypeInt64)
 
@@ -71,6 +65,25 @@ func GetFollowerList(ctx *gin.Context) {
 
 	socialServiceClient := ctx.Keys["social_service"].(service.SocialServiceClient)
 	socialResp, err := socialServiceClient.GetFollowerList(context.Background(), &followerList)
+	if err != nil {
+		PanicIfFollowError(err)
+	}
+
+	r := res.FollowListResponse{
+		StatusCode: socialResp.StatusCode,
+		StatusMsg:  socialResp.StatusMsg,
+		UserList:   GetUserInfo(socialResp.UserId, ctx),
+	}
+	ctx.JSON(http.StatusOK, r)
+}
+
+func GetFriendList(ctx *gin.Context) {
+	var friendList service.FollowListRequest
+	userId := ctx.Query("user_id")
+	friendList.UserId, _ = strconv.ParseInt(userId, 10, 64)
+
+	socialServiceClient := ctx.Keys["social_service"].(service.SocialServiceClient)
+	socialResp, err := socialServiceClient.GetFriendList(context.Background(), &friendList)
 	if err != nil {
 		PanicIfFollowError(err)
 	}
