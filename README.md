@@ -36,7 +36,7 @@ Marine
 
 ![image](https://github.com/marinezz/Tiny-TikTok/blob/main/docs/image/技术架构图.png)
 
-*      **Gin：**Web框架。高性能、轻量级、**简洁**，被广泛用于构建RESTful API、网站和其它HTTP服务
+* **Gin：**Web框架。高性能、轻量级、**简洁**，被广泛用于构建RESTful API、网站和其它HTTP服务
 
 *  **JWT：**用于身份的验证和授权，具有跨平台、无状态的优点，不需要再会话中保存任何信息，减轻服务器的负担
 
