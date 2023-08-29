@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+	"utils/exception"
 )
 
 func PostMessage(ctx *gin.Context) {
@@ -17,6 +18,16 @@ func PostMessage(ctx *gin.Context) {
 	postMessage.ToUserId, _ = strconv.ParseInt(toUserId, 10, 64)
 	actionType := ctx.Query("action_type")
 	actionTypeInt64, _ := strconv.ParseInt(actionType, 10, 32)
+
+	if actionTypeInt64 != 1 {
+		r := res.FavoriteActionResponse{
+			StatusCode: exception.ErrOperate,
+			StatusMsg:  exception.GetMsg(exception.ErrOperate),
+		}
+
+		ctx.JSON(http.StatusOK, r)
+		return
+	}
 
 	postMessage.ActionType = int32(actionTypeInt64)
 	content := ctx.Query("content")
