@@ -24,7 +24,7 @@
 
 **项目启动查看第 5 部分**
 
-
+ 
 
 ## 2 项目概览
 
@@ -52,7 +52,7 @@
 
 * **RabbitMQ**：消息中间件，用于程序之间传递消息，支持消息的发布和订阅，支持消息异步传递，实现解耦和异步处理
 
-  
+   
 
 ### 2.2 总体设计
 
@@ -64,7 +64,7 @@
 * api_router通过gprc实现服务之间的通讯
 * 服务操作数据库，将信息返回给上一层
 
-
+ 
 
 ### 2.3 项目结构设计
 
@@ -79,7 +79,7 @@
 └─video_service    # 视频服务
 ```
 
-
+ 
 
 * **路由网关**
 
@@ -105,7 +105,7 @@
 
 ​		**/pkg**：存放可以被外部使用的代码库。auth中存放token鉴权，res存放对服务端的统一返回
 
-
+ 
 
 * **具体服务**
 
@@ -123,7 +123,7 @@
 │      └─encryption   # 密码加密
 ```
 
-
+ 
 
 * **工具函数包**
 
@@ -134,7 +134,7 @@
 │  └─snowFlake        # 雪花算法生成ID
 ```
 
-
+ 
 
 ### 2.4 数据库设计
 
@@ -152,21 +152,21 @@
 
 **点赞表**：用于存放视频的点赞信息，通过用户id关联用户表获取点赞的用户，视频id关联视频表获取被点赞的视频
 
-
+ 
 
 ## 3 详细设计
 
 本部分包含：xxxx等的设计
 
-详细设计参考答辩文档：[说明文档](https://v1rwxew1bdp.feishu.cn/docx/ATJPdobcOouDDLxVHsycpANMnig?from=from_copylink)
+详细设计参考答辩文档第三部分：[说明文档](https://v1rwxew1bdp.feishu.cn/docx/ATJPdobcOouDDLxVHsycpANMnig?from=from_copylink)
 
-
+  
 
 ## 4 测试
 
 测试参考测试文档：[测试报告](https://v1rwxew1bdp.feishu.cn/docx/ATJPdobcOouDDLxVHsycpANMnig?contentTheme=DARK&theme=LIGHT#ZFYRdVRcBoOsnYxSgDAchR2Dn0c)
 
-
+ 
 
 ## 5 启动说明
 
@@ -186,7 +186,7 @@
 
 确保每一个组件安装成功，并将ffmpeg和protoc配置进入环境变量
 
-
+ 
 
 ### 5.2 拉取项目
 
@@ -196,7 +196,7 @@
 git clone https://github.com/marinezz/Tiny-TikTok.git
 ```
 
- 
+  
 
 ### 5.3 拉取依赖
 
@@ -207,7 +207,7 @@ cd api_router/
 go mod tidy
 ```
 
-
+ 
 
 ### 5.4 启动项目
 
@@ -221,5 +221,5 @@ go mod tidy
 
 **第五步**：项目启动成功
 
-
+ 
 
