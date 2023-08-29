@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+	"utils/exception"
 )
 
 type Follow struct {
@@ -24,6 +25,16 @@ func FollowAction(ctx *gin.Context) {
 	actionType := ctx.Query("action_type")
 	actionTypeInt64, _ := strconv.ParseInt(actionType, 10, 32)
 	followAction.ActionType = int32(actionTypeInt64)
+
+	if actionTypeInt64 != 1 && actionTypeInt64 != 2 {
+		r := res.FavoriteActionResponse{
+			StatusCode: exception.ErrOperate,
+			StatusMsg:  exception.GetMsg(exception.ErrOperate),
+		}
+
+		ctx.JSON(http.StatusOK, r)
+		return
+	}
 
 	socialServiceClient := ctx.Keys["social_service"].(service.SocialServiceClient)
 	socialResp, err := socialServiceClient.FollowAction(context.Background(), &followAction)
