@@ -71,7 +71,7 @@ func (*CommentModel) CommentList(videoId int64) ([]Comment, error) {
 	var comments []Comment
 
 	result := DB.Table("comment").
-		Where("video_id = ?", videoId).
+		Where("video_id = ? AND comment_status = ?", videoId, true).
 		Find(&comments)
 	if result.Error != nil {
 		return nil, result.Error
