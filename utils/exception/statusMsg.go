@@ -11,7 +11,8 @@ var Msg = map[int]string{
 
 	ErrOperate: "错误操作",
 
-	DataErr: "数据创建错误",
+	DataErr:  "数据创建错误",
+	CacheErr: "Redis异常",
 
 	UserExist:     "用户已经存在",
 	UserUnExist:   "用户不存在，请注册",

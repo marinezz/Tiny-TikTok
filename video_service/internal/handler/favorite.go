@@ -2,9 +2,11 @@ package handler
 
 import (
 	"context"
+	"strconv"
 	"utils/exception"
 	"video/internal/model"
 	"video/internal/service"
+	"video/pkg/cache"
 )
 
 // FavoriteAction 点赞操作
@@ -33,6 +35,24 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 				resp.StatusMsg = exception.GetMsg(exception.VideoFavoriteErr)
 				return resp, err
 			}
+
+			// 点赞成功，缓存中点赞总数 + 1
+			exist, err := cache.Redis.HExists(context.Background(), "userFavorite_count", strconv.FormatInt(req.UserId, 10)).Result()
+			if err != nil {
+				resp.StatusCode = exception.CacheErr
+				resp.StatusMsg = exception.GetMsg(exception.CacheErr)
+				return resp, err
+			}
+
+			if exist {
+				// 字段存在，该记录数量 + 1
+				_, err = cache.Redis.HIncrBy(context.Background(), "userFavorite_count", strconv.FormatInt(req.UserId, 10), 1).Result()
+				if err != nil {
+					resp.StatusCode = exception.CacheErr
+					resp.StatusMsg = exception.GetMsg(exception.CacheErr)
+					return resp, err
+				}
+			}
 		}
 	}
 
@@ -51,6 +71,24 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 			if err != nil {
 				resp.StatusCode = exception.VideoFavoriteErr
 				resp.StatusMsg = exception.GetMsg(exception.VideoFavoriteErr)
+				return resp, err
+			}
+		}
+
+		// 点赞成功，缓存中点赞总数 + 1
+		exist, err := cache.Redis.HExists(context.Background(), "userFavorite_count", strconv.FormatInt(req.UserId, 10)).Result()
+		if err != nil {
+			resp.StatusCode = exception.CacheErr
+			resp.StatusMsg = exception.GetMsg(exception.CacheErr)
+			return resp, err
+		}
+
+		if exist {
+			// 字段存在，该记录数量 + 1
+			_, err = cache.Redis.HIncrBy(context.Background(), "userFavorite_count", strconv.FormatInt(req.UserId, 10), -1).Result()
+			if err != nil {
+				resp.StatusCode = exception.CacheErr
+				resp.StatusMsg = exception.GetMsg(exception.CacheErr)
 				return resp, err
 			}
 		}

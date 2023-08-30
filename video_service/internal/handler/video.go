@@ -4,11 +4,13 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"log"
+	"strconv"
 	"sync"
 	"time"
 	"utils/exception"
 	"video/internal/model"
 	"video/internal/service"
+	"video/pkg/cache"
 	"video/pkg/cut"
 	"video/third_party"
 )
@@ -126,6 +128,25 @@ func (*VideoService) PublishAction(ctx context.Context, req *service.PublishActi
 		resp.StatusMsg = exception.GetMsg(exception.VideoUploadErr)
 		return resp, updataErr
 	}
+
+	// 发布成功，缓存中作品总数 + 1，如果不存在缓存则不做操作
+	exist, err := cache.Redis.HExists(context.Background(), "work_count", strconv.FormatInt(req.UserId, 10)).Result()
+	if err != nil {
+		resp.StatusCode = exception.CacheErr
+		resp.StatusMsg = exception.GetMsg(exception.CacheErr)
+		return resp, err
+	}
+
+	if exist {
+		// 字段存在，该记录数量 + 1
+		_, err = cache.Redis.HIncrBy(context.Background(), "work_count", strconv.FormatInt(req.UserId, 10), 1).Result()
+		if err != nil {
+			resp.StatusCode = exception.CacheErr
+			resp.StatusMsg = exception.GetMsg(exception.CacheErr)
+			return resp, updataErr
+		}
+	}
+
 	resp.StatusCode = exception.SUCCESS
 	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
 
@@ -166,19 +187,68 @@ func (*VideoService) CountInfo(ctx context.Context, req *service.CountRequest) (
 			resp.StatusMsg = exception.GetMsg(exception.VideoNoFavorite)
 			return resp, err
 		}
+
 		// 获取作品数量
-		count.WorkCount, err = model.GetVideoInstance().GetWorkCount(userId)
+		exist, err := cache.Redis.HExists(context.Background(), "work_count", strconv.FormatInt(userId, 10)).Result()
 		if err != nil {
-			resp.StatusCode = exception.UserNoVideo
-			resp.StatusMsg = exception.GetMsg(exception.UserNoVideo)
+			resp.StatusCode = exception.CacheErr
+			resp.StatusMsg = exception.GetMsg(exception.CacheErr)
 			return resp, err
 		}
+		// 如果存在则读缓存
+		if exist {
+			count.WorkCount, err = cache.Redis.HGet(context.Background(), "work_count", strconv.FormatInt(userId, 10)).Int64()
+			if err != nil {
+				resp.StatusCode = exception.CacheErr
+				resp.StatusMsg = exception.GetMsg(exception.CacheErr)
+				return resp, err
+			}
+		} else {
+			// 不存在则查数据库
+			count.WorkCount, err = model.GetVideoInstance().GetWorkCount(userId)
+			if err != nil {
+				resp.StatusCode = exception.UserNoVideo
+				resp.StatusMsg = exception.GetMsg(exception.UserNoVideo)
+				return resp, err
+			}
+			// 放入缓存
+			err := cache.Redis.HSet(context.Background(), "work_count", strconv.FormatInt(userId, 10), count.WorkCount).Err()
+			if err != nil {
+				resp.StatusCode = exception.CacheErr
+				resp.StatusMsg = exception.GetMsg(exception.CacheErr)
+				return resp, err
+			}
+		}
+
 		// 获取喜欢数量
-		count.FavoriteCount, err = model.GetFavoriteInstance().GetFavoriteCount(userId)
+		exist, err = cache.Redis.HExists(context.Background(), "userFavorite_count", strconv.FormatInt(userId, 10)).Result()
 		if err != nil {
-			resp.StatusCode = exception.UserNoFavorite
-			resp.StatusMsg = exception.GetMsg(exception.UserNoFavorite)
+			resp.StatusCode = exception.CacheErr
+			resp.StatusMsg = exception.GetMsg(exception.CacheErr)
 			return resp, err
+		}
+		if exist {
+			count.WorkCount, err = cache.Redis.HGet(context.Background(), "userFavorite_count", strconv.FormatInt(userId, 10)).Int64()
+			if err != nil {
+				resp.StatusCode = exception.CacheErr
+				resp.StatusMsg = exception.GetMsg(exception.CacheErr)
+				return resp, err
+			}
+		} else {
+			count.FavoriteCount, err = model.GetFavoriteInstance().GetFavoriteCount(userId)
+			if err != nil {
+				resp.StatusCode = exception.UserNoFavorite
+				resp.StatusMsg = exception.GetMsg(exception.UserNoFavorite)
+				return resp, err
+			}
+
+			// 放入缓存
+			err := cache.Redis.HSet(context.Background(), "userFavorite_count", strconv.FormatInt(userId, 10), count.FavoriteCount).Err()
+			if err != nil {
+				resp.StatusCode = exception.CacheErr
+				resp.StatusMsg = exception.GetMsg(exception.CacheErr)
+				return resp, err
+			}
 		}
 
 		resp.Counts = append(resp.Counts, &count)

@@ -2,8 +2,12 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
+	"log"
+	"strconv"
 	"user/internal/model"
 	"user/internal/service"
+	"user/pkg/cache"
 	"utils/exception"
 )
 
@@ -85,12 +89,34 @@ func (*UserService) UserInfo(ctx context.Context, req *service.UserInfoRequest) 
 	userIds := req.UserIds
 
 	for _, userId := range userIds {
-		//  Todo 查看缓存
-		user, err := model.GetInstance().FindUserById(userId)
+		// 查看缓存是否存在 需要的信息
+		var user *model.User
+
+		count, err := cache.Redis.Exists(context.Background(), strconv.FormatInt(userId, 10)).Result()
 		if err != nil {
-			resp.StatusCode = exception.UserUnExist
-			resp.StatusMsg = exception.GetMsg(exception.UserUnExist)
-			return resp, err
+			log.Print(err)
+		}
+
+		if count > 0 {
+			// 查询缓存
+			userString, _ := cache.Redis.Get(context.Background(), strconv.FormatInt(userId, 10)).Result()
+			err := json.Unmarshal([]byte(userString), &user)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			// 查询数据库
+			user, err = model.GetInstance().FindUserById(userId)
+			if err != nil {
+				resp.StatusCode = exception.UserUnExist
+				resp.StatusMsg = exception.GetMsg(exception.UserUnExist)
+				return resp, err
+			}
+
+			// 将查询结果放入缓存中
+			userJson, _ := json.Marshal(&user)
+			_ = cache.Redis.Set(context.Background(), strconv.FormatInt(userId, 10), userJson, 0).Err()
+
 		}
 		resp.Users = append(resp.Users, BuildUser(user))
 	}
