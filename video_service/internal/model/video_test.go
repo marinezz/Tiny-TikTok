@@ -41,18 +41,29 @@ func TestFavoriteModel_DeleteFavorite(t *testing.T) {
 // 测试创建评论
 func TestCommentModel_CreateComment(t *testing.T) {
 	InitDb()
+	tx := DB.Begin()
 	comment := Comment{
 		UserId:  111,
 		VideoId: 222,
 		Content: "喜欢",
 	}
-	GetCommentInstance().CreateComment(&comment)
+	GetCommentInstance().CreateComment(tx, &comment)
+	tx.Commit()
 }
 
 // 测试删除评论
 func TestCommentModel_DeleteComment(t *testing.T) {
 	InitDb()
-	GetCommentInstance().DeleteComment(2289128100995072)
+	tx := DB.Begin()
+	GetCommentInstance().DeleteComment(tx, 8361782507610112)
+	tx.Commit()
+}
+
+// 测试删除评论
+func TestCommentModel_CommentList(t *testing.T) {
+	InitDb()
+	commentList, _ := GetCommentInstance().CommentList(4395719587667968)
+	fmt.Print(commentList)
 }
 
 func TestTime(t *testing.T) {
@@ -99,6 +110,7 @@ func TestFavoriteModel_IsFavorite(t *testing.T) {
 	fmt.Print(favorite)
 }
 
+// 根据时间查找视频列表
 func TestVideoModel_GetVideoByTime(t *testing.T) {
 	InitDb()
 	videos, _ := GetVideoInstance().GetVideoByTime(time.Now())
