@@ -22,9 +22,17 @@
 
 简易抖音项目后端实现，使用 **Gin** 作为web框架，**MySQL** 作为数据存储并使用 Gorm 操作数据库。整个项目分为用户服务、视频服务、社交服务，使用 **Etcd** 作为注册中心，**Grpc** 进行服务之间的通信。 采用 **Redis** 作为缓存，提高读写效率；使用消息中间件 **RabbitMQ**，达到上游服务和下游服务的解耦。
 
-**项目启动查看第 5 部分**
+**第一部分：项目简介**
 
- 
+**第二部分：项目概览。包括整个项目的技术选择、整体设计、目录结构设计与数据库设计**
+
+**第三部分：项目详细设计。包括对项目的思考以及一些关键点的设计思路**
+
+**第四部分：项目测试**
+
+**第五部分：启动说明。拿到整个项目，应该如何让它跑起来**
+
+<br>
 
 ## 2 项目概览
 
@@ -52,7 +60,7 @@
 
 * **RabbitMQ**：消息中间件，用于程序之间传递消息，支持消息的发布和订阅，支持消息异步传递，实现解耦和异步处理
 
-   
+<br>
 
 ### 2.2 总体设计
 
@@ -64,7 +72,7 @@
 * api_router通过gprc实现服务之间的通讯
 * 服务操作数据库，将信息返回给上一层
 
- 
+<br>
 
 ### 2.3 项目结构设计
 
@@ -79,7 +87,7 @@
 └─video_service    # 视频服务
 ```
 
- 
+<br>
 
 * **路由网关**
 
@@ -105,7 +113,7 @@
 
 ​		**/pkg**：存放可以被外部使用的代码库。auth中存放token鉴权，res存放对服务端的统一返回
 
- 
+<br>
 
 * **具体服务**
 
@@ -123,7 +131,7 @@
 │      └─encryption   # 密码加密
 ```
 
- 
+<br>
 
 * **工具函数包**
 
@@ -134,7 +142,7 @@
 │  └─snowFlake        # 雪花算法生成ID
 ```
 
- 
+<br>
 
 ### 2.4 数据库设计
 
@@ -152,21 +160,23 @@
 
 **点赞表**：用于存放视频的点赞信息，通过用户id关联用户表获取点赞的用户，视频id关联视频表获取被点赞的视频
 
- 
+<br>
 
 ## 3 详细设计
 
-本部分包含：xxxx等的设计
+本部分包含：**认证鉴权**、**分布式唯一ID**、**密码加密**、**数据库操作**、**视频上传**、**日志打印**、**服务熔断**、**统一错误处理**、**高性能读写**、**异步解耦**的设计
 
 详细设计参考答辩文档第三部分：[说明文档](https://v1rwxew1bdp.feishu.cn/docx/ATJPdobcOouDDLxVHsycpANMnig?from=from_copylink)
 
-  
+<br>
 
 ## 4 测试
 
-测试参考测试文档：[测试报告](https://v1rwxew1bdp.feishu.cn/docx/ATJPdobcOouDDLxVHsycpANMnig?contentTheme=DARK&theme=LIGHT#ZFYRdVRcBoOsnYxSgDAchR2Dn0c)
+本部分包含：单元测试、接口测试（功能测试）、性能测试（压力测试）
 
- 
+测试详情查看测试文档：[测试报告](https://v1rwxew1bdp.feishu.cn/docx/ATJPdobcOouDDLxVHsycpANMnig?contentTheme=DARK&theme=LIGHT#ZFYRdVRcBoOsnYxSgDAchR2Dn0c)
+
+<br>
 
 ## 5 启动说明
 
@@ -182,7 +192,7 @@
 |  **Redis**   |       |         缓存         |
 | **RabbitMQ** |       | 消息中间件，异步解耦 |
 |  **FFmpeg**  |  6.0  |    视频剪切为封面    |
-|    Protoc    | 3.15  |      生成pb文件      |
+|  **Protoc**  | 3.15  |      生成pb文件      |
 
 确保每一个组件安装成功，并将ffmpeg和protoc配置进入环境变量
 
@@ -196,7 +206,7 @@
 git clone https://github.com/marinezz/Tiny-TikTok.git
 ```
 
-  
+<br>
 
 ### 5.3 拉取依赖
 
@@ -207,7 +217,7 @@ cd api_router/
 go mod tidy
 ```
 
- 
+<br>
 
 ### 5.4 启动项目
 
@@ -221,5 +231,6 @@ go mod tidy
 
 **第五步**：项目启动成功
 
- 
+<br>
 
+## 6 总结与展望
