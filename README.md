@@ -174,7 +174,7 @@
 
 本部分包含：单元测试、接口测试（功能测试）、性能测试（压力测试）
 
-测试详情查看测试文档：[测试报告](https://v1rwxew1bdp.feishu.cn/docx/ATJPdobcOouDDLxVHsycpANMnig?contentTheme=DARK&theme=LIGHT#ZFYRdVRcBoOsnYxSgDAchR2Dn0c)
+测试详情查看测试文档：[测试报告](https://v1rwxew1bdp.feishu.cn/docx/F1aQdSY6AoIzeLx6B8tcVQhgnud?from=from_copylink)
 
 <br>
 
