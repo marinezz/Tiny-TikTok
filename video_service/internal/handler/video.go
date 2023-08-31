@@ -322,8 +322,30 @@ func BuildVideo(videos []model.Video, userId int64) []*service.Video {
 	var videoResp []*service.Video
 
 	for _, video := range videos {
-		// 获取is_favorite的状态
-		isFavorite, _ := model.GetFavoriteInstance().IsFavorite(userId, video.Id)
+		// 查询是否有喜欢的缓存，如果有，比对缓存，如果没有，构建缓存再查缓存
+		var isFavorite bool
+		key := fmt.Sprintf("%s:%s:%s", "user", "favorite_video", strconv.FormatInt(userId, 10))
+
+		exists, err := cache.Redis.Exists(context.Background(), key).Result()
+		if err != nil {
+			log.Print(err)
+		}
+
+		if exists > 0 {
+			isFavorite, err = cache.Redis.SIsMember(context.Background(), key, strconv.FormatInt(video.Id, 10)).Result()
+			if err != nil {
+				log.Print(err)
+			}
+		} else {
+			err := buildFavoriteCache(userId)
+			if err != nil {
+				log.Print(err)
+			}
+			isFavorite, err = cache.Redis.SIsMember(context.Background(), key, strconv.FormatInt(video.Id, 10)).Result()
+			if err != nil {
+				log.Print(err)
+			}
+		}
 
 		videoResp = append(videoResp, &service.Video{
 			Id:            video.Id,

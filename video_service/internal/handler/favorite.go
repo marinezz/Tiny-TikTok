@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 	"utils/exception"
@@ -16,6 +17,7 @@ import (
 func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteActionRequest) (resp *service.FavoriteActionResponse, err error) {
 	resp = new(service.FavoriteActionResponse)
 	key := fmt.Sprintf("%s:%s", "user", "favorite_count")
+	setKey := fmt.Sprintf("%s:%s:%s", "user", "favorit_list", strconv.FormatInt(req.UserId, 10))
 
 	action := req.ActionType
 	var favorite model.Favorite
@@ -57,6 +59,32 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 					return resp, err
 				}
 			}
+
+			// 加入喜欢set中，如果没有，构建缓存再加入set中
+			exists, err := cache.Redis.Exists(context.Background(), setKey).Result()
+			if err != nil {
+				log.Print(err)
+			}
+
+			if exists > 0 {
+				err = cache.Redis.SAdd(context.Background(), setKey, strconv.FormatInt(req.VideoId, 10)).Err()
+				if err != nil {
+					resp.StatusCode = exception.CacheErr
+					resp.StatusMsg = exception.GetMsg(exception.CacheErr)
+					return resp, err
+				}
+			} else {
+				err := buildFavoriteCache(req.UserId)
+				if err != nil {
+					log.Print(err)
+				}
+				err = cache.Redis.SAdd(context.Background(), setKey, req.VideoId).Err()
+				if err != nil {
+					resp.StatusCode = exception.CacheErr
+					resp.StatusMsg = exception.GetMsg(exception.CacheErr)
+					return resp, err
+				}
+			}
 		}
 	}
 
@@ -89,6 +117,32 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 			if exist {
 				// 字段存在，该记录数量 + 1
 				_, err = cache.Redis.HIncrBy(context.Background(), key, strconv.FormatInt(req.UserId, 10), -1).Result()
+				if err != nil {
+					resp.StatusCode = exception.CacheErr
+					resp.StatusMsg = exception.GetMsg(exception.CacheErr)
+					return resp, err
+				}
+			}
+
+			// 加入喜欢set中，如果没有，构建缓存再去掉set中数据
+			exists, err := cache.Redis.Exists(context.Background(), setKey).Result()
+			if err != nil {
+				log.Print(err)
+			}
+
+			if exists > 0 {
+				err = cache.Redis.SRem(context.Background(), setKey, req.VideoId).Err()
+				if err != nil {
+					resp.StatusCode = exception.CacheErr
+					resp.StatusMsg = exception.GetMsg(exception.CacheErr)
+					return resp, err
+				}
+			} else {
+				err := buildFavoriteCache(req.UserId)
+				if err != nil {
+					log.Print(err)
+				}
+				err = cache.Redis.SRem(context.Background(), setKey, req.VideoId).Err()
 				if err != nil {
 					resp.StatusCode = exception.CacheErr
 					resp.StatusMsg = exception.GetMsg(exception.CacheErr)
@@ -161,4 +215,27 @@ func (*VideoService) FavoriteList(ctx context.Context, req *service.FavoriteList
 	resp.VideoList = BuildVideoForFavorite(videos, true)
 
 	return resp, nil
+}
+
+// 构建点赞视频缓存
+func buildFavoriteCache(userId int64) error {
+	key := fmt.Sprintf("%s:%s:%s", "user", "favorite_video", strconv.FormatInt(userId, 10))
+
+	// 查询出所有喜欢的视频
+	favoriteVideoList, err := model.GetFavoriteInstance().FavoriteVideoList(userId)
+	if err != nil {
+		return err
+	}
+
+	videoIds := make([]interface{}, len(favoriteVideoList))
+	for i, video := range favoriteVideoList {
+		videoIds[i] = video
+	}
+
+	err = cache.Redis.SAdd(context.Background(), key, videoIds...).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
