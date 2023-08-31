@@ -2,10 +2,13 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"time"
 	"utils/exception"
 	"video/internal/model"
 	"video/internal/service"
+	"video/pkg/cache"
 )
 
 // CommentAction 评论操作
@@ -107,13 +110,44 @@ func (*VideoService) CommentAction(ctx context.Context, req *service.CommentActi
 // CommentList 评论列表
 func (*VideoService) CommentList(ctx context.Context, req *service.CommentListRequest) (resp *service.CommentListResponse, err error) {
 	resp = new(service.CommentListResponse)
+	var comments []model.Comment
+	key := fmt.Sprintf("%s:%s:%s", "video", "comment_list", req.VideoId)
 
-	// 根据视频id找到所有的评论
-	comments, err := model.GetCommentInstance().CommentList(req.VideoId)
+	exist, err := cache.Redis.Exists(context.Background(), key).Result()
 	if err != nil {
-		resp.StatusCode = exception.CommentUnExist
-		resp.StatusMsg = exception.GetMsg(exception.CommentUnExist)
-		return nil, err
+		resp.StatusCode = exception.CacheErr
+		resp.StatusMsg = exception.GetMsg(exception.CacheErr)
+		return resp, err
+	}
+
+	if exist > 0 {
+		commentsString, err := cache.Redis.Get(context.Background(), key).Result()
+		if err != nil {
+			resp.StatusCode = exception.VideoUnExist
+			resp.StatusMsg = exception.GetMsg(exception.VideoUnExist)
+			return resp, err
+		}
+		err = json.Unmarshal([]byte(commentsString), &comments)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// 根据视频id找到所有的评论
+		comments, err = model.GetCommentInstance().CommentList(req.VideoId)
+		if err != nil {
+			resp.StatusCode = exception.CommentUnExist
+			resp.StatusMsg = exception.GetMsg(exception.CommentUnExist)
+			return nil, err
+		}
+
+		// 将查询结果放入缓存中
+		commentJson, _ := json.Marshal(&comments)
+		err = cache.Redis.Set(context.Background(), key, commentJson, 30*time.Minute).Err()
+		if err != nil {
+			resp.StatusCode = exception.CacheErr
+			resp.StatusMsg = exception.GetMsg(exception.CacheErr)
+			return resp, err
+		}
 	}
 
 	resp.StatusCode = exception.SUCCESS

@@ -3,8 +3,9 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"fmt"
 	"strconv"
+	"time"
 	"user/internal/model"
 	"user/internal/service"
 	"user/pkg/cache"
@@ -91,16 +92,24 @@ func (*UserService) UserInfo(ctx context.Context, req *service.UserInfoRequest) 
 	for _, userId := range userIds {
 		// 查看缓存是否存在 需要的信息
 		var user *model.User
+		key := fmt.Sprintf("%s:%s:%s", "user", "info", strconv.FormatInt(userId, 10))
 
-		count, err := cache.Redis.Exists(context.Background(), strconv.FormatInt(userId, 10)).Result()
+		count, err := cache.Redis.Exists(context.Background(), key).Result()
 		if err != nil {
-			log.Print(err)
+			resp.StatusCode = exception.CacheErr
+			resp.StatusMsg = exception.GetMsg(exception.CacheErr)
+			return resp, err
 		}
 
 		if count > 0 {
 			// 查询缓存
-			userString, _ := cache.Redis.Get(context.Background(), strconv.FormatInt(userId, 10)).Result()
-			err := json.Unmarshal([]byte(userString), &user)
+			userString, err := cache.Redis.Get(context.Background(), key).Result()
+			if err != nil {
+				resp.StatusCode = exception.CacheErr
+				resp.StatusMsg = exception.GetMsg(exception.CacheErr)
+				return resp, err
+			}
+			err = json.Unmarshal([]byte(userString), &user)
 			if err != nil {
 				return nil, err
 			}
@@ -115,7 +124,12 @@ func (*UserService) UserInfo(ctx context.Context, req *service.UserInfoRequest) 
 
 			// 将查询结果放入缓存中
 			userJson, _ := json.Marshal(&user)
-			_ = cache.Redis.Set(context.Background(), strconv.FormatInt(userId, 10), userJson, 0).Err()
+			err = cache.Redis.Set(context.Background(), key, userJson, 12*time.Hour).Err()
+			if err != nil {
+				resp.StatusCode = exception.CacheErr
+				resp.StatusMsg = exception.GetMsg(exception.CacheErr)
+				return resp, err
+			}
 
 		}
 		resp.Users = append(resp.Users, BuildUser(user))

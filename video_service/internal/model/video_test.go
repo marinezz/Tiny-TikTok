@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -115,4 +116,10 @@ func TestVideoModel_GetVideoByTime(t *testing.T) {
 	InitDb()
 	videos, _ := GetVideoInstance().GetVideoByTime(time.Now())
 	fmt.Print(videos)
+}
+
+func TestFmt(t *testing.T) {
+	userId := int64(111)
+	key := fmt.Sprintf("%s:%s:%s", "user", "info", strconv.FormatInt(userId, 10))
+	print(key)
 }

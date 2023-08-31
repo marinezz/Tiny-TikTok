@@ -2,7 +2,10 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"strconv"
+	"time"
 	"utils/exception"
 	"video/internal/model"
 	"video/internal/service"
@@ -12,6 +15,7 @@ import (
 // FavoriteAction 点赞操作
 func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteActionRequest) (resp *service.FavoriteActionResponse, err error) {
 	resp = new(service.FavoriteActionResponse)
+	key := fmt.Sprintf("%s:%s", "user", "favorite_count")
 
 	action := req.ActionType
 	var favorite model.Favorite
@@ -37,7 +41,7 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 			}
 
 			// 点赞成功，缓存中点赞总数 + 1
-			exist, err := cache.Redis.HExists(context.Background(), "userFavorite_count", strconv.FormatInt(req.UserId, 10)).Result()
+			exist, err := cache.Redis.HExists(context.Background(), key, strconv.FormatInt(req.UserId, 10)).Result()
 			if err != nil {
 				resp.StatusCode = exception.CacheErr
 				resp.StatusMsg = exception.GetMsg(exception.CacheErr)
@@ -46,7 +50,7 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 
 			if exist {
 				// 字段存在，该记录数量 + 1
-				_, err = cache.Redis.HIncrBy(context.Background(), "userFavorite_count", strconv.FormatInt(req.UserId, 10), 1).Result()
+				_, err = cache.Redis.HIncrBy(context.Background(), key, strconv.FormatInt(req.UserId, 10), 1).Result()
 				if err != nil {
 					resp.StatusCode = exception.CacheErr
 					resp.StatusMsg = exception.GetMsg(exception.CacheErr)
@@ -73,23 +77,23 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 				resp.StatusMsg = exception.GetMsg(exception.VideoFavoriteErr)
 				return resp, err
 			}
-		}
 
-		// 点赞成功，缓存中点赞总数 + 1
-		exist, err := cache.Redis.HExists(context.Background(), "userFavorite_count", strconv.FormatInt(req.UserId, 10)).Result()
-		if err != nil {
-			resp.StatusCode = exception.CacheErr
-			resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-			return resp, err
-		}
-
-		if exist {
-			// 字段存在，该记录数量 + 1
-			_, err = cache.Redis.HIncrBy(context.Background(), "userFavorite_count", strconv.FormatInt(req.UserId, 10), -1).Result()
+			// 点赞成功，缓存中点赞总数 - 1
+			exist, err := cache.Redis.HExists(context.Background(), key, strconv.FormatInt(req.UserId, 10)).Result()
 			if err != nil {
 				resp.StatusCode = exception.CacheErr
 				resp.StatusMsg = exception.GetMsg(exception.CacheErr)
 				return resp, err
+			}
+
+			if exist {
+				// 字段存在，该记录数量 + 1
+				_, err = cache.Redis.HIncrBy(context.Background(), key, strconv.FormatInt(req.UserId, 10), -1).Result()
+				if err != nil {
+					resp.StatusCode = exception.CacheErr
+					resp.StatusMsg = exception.GetMsg(exception.CacheErr)
+					return resp, err
+				}
 			}
 		}
 	}
@@ -103,22 +107,53 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 // FavoriteList 喜欢列表
 func (*VideoService) FavoriteList(ctx context.Context, req *service.FavoriteListRequest) (resp *service.FavoriteListResponse, err error) {
 	resp = new(service.FavoriteListResponse)
+	var videos []model.Video
+	key := fmt.Sprintf("%s:%s:%s", "user", "favorit_list", strconv.FormatInt(req.UserId, 10))
 
-	// 根据用户id找到所有的视频
-	var videoIds []int64
-	videoIds, err = model.GetFavoriteInstance().FavoriteVideoList(req.UserId)
+	exits, err := cache.Redis.Exists(context.Background(), key).Result()
 	if err != nil {
-		resp.StatusCode = exception.UserNoVideo
-		resp.StatusMsg = exception.GetMsg(exception.UserNoVideo)
+		resp.StatusCode = exception.CacheErr
+		resp.StatusMsg = exception.GetMsg(exception.CacheErr)
 		return resp, err
 	}
 
-	// 根据视频id找到视频的详细信息
-	videos, err := model.GetVideoInstance().GetVideoList(videoIds)
-	if err != nil {
-		resp.StatusCode = exception.VideoUnExist
-		resp.StatusMsg = exception.GetMsg(exception.VideoUnExist)
-		return resp, err
+	if exits > 0 {
+		videosString, err := cache.Redis.Get(context.Background(), key).Result()
+		if err != nil {
+			resp.StatusCode = exception.VideoUnExist
+			resp.StatusMsg = exception.GetMsg(exception.VideoUnExist)
+			return resp, err
+		}
+		err = json.Unmarshal([]byte(videosString), &videos)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// 根据用户id找到所有的视频
+		var videoIds []int64
+		videoIds, err = model.GetFavoriteInstance().FavoriteVideoList(req.UserId)
+		if err != nil {
+			resp.StatusCode = exception.UserNoVideo
+			resp.StatusMsg = exception.GetMsg(exception.UserNoVideo)
+			return resp, err
+		}
+
+		// 根据视频id找到视频的详细信息
+		videos, err = model.GetVideoInstance().GetVideoList(videoIds)
+		if err != nil {
+			resp.StatusCode = exception.VideoUnExist
+			resp.StatusMsg = exception.GetMsg(exception.VideoUnExist)
+			return resp, err
+		}
+
+		// 放入缓存中
+		videosJson, _ := json.Marshal(videos)
+		err := cache.Redis.Set(context.Background(), key, videosJson, 30*time.Minute).Err()
+		if err != nil {
+			resp.StatusCode = exception.VideoUnExist
+			resp.StatusMsg = exception.GetMsg(exception.VideoUnExist)
+			return resp, err
+		}
 	}
 
 	resp.StatusCode = exception.SUCCESS
