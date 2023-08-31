@@ -17,7 +17,7 @@ import (
 func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteActionRequest) (resp *service.FavoriteActionResponse, err error) {
 	resp = new(service.FavoriteActionResponse)
 	key := fmt.Sprintf("%s:%s", "user", "favorite_count")
-	setKey := fmt.Sprintf("%s:%s:%s", "user", "favorit_list", strconv.FormatInt(req.UserId, 10))
+	setKey := fmt.Sprintf("%s:%s:%s", "user", "favorite_video", strconv.FormatInt(req.UserId, 10))
 
 	action := req.ActionType
 	var favorite model.Favorite

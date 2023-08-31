@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 	"utils/exception"
 	"video/internal/model"
@@ -111,7 +112,7 @@ func (*VideoService) CommentAction(ctx context.Context, req *service.CommentActi
 func (*VideoService) CommentList(ctx context.Context, req *service.CommentListRequest) (resp *service.CommentListResponse, err error) {
 	resp = new(service.CommentListResponse)
 	var comments []model.Comment
-	key := fmt.Sprintf("%s:%s:%s", "video", "comment_list", req.VideoId)
+	key := fmt.Sprintf("%s:%s:%s", "video", "comment_list", strconv.FormatInt(req.VideoId, 10))
 
 	exist, err := cache.Redis.Exists(context.Background(), key).Result()
 	if err != nil {
