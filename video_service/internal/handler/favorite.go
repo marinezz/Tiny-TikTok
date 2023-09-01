@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"strconv"
 	"time"
 	"utils/exception"
@@ -43,46 +42,38 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 			}
 
 			// 点赞成功，缓存中点赞总数 + 1
-			exist, err := cache.Redis.HExists(context.Background(), key, strconv.FormatInt(req.UserId, 10)).Result()
+			exist, err := cache.Redis.HExists(cache.Ctx, key, strconv.FormatInt(req.UserId, 10)).Result()
 			if err != nil {
-				resp.StatusCode = exception.CacheErr
-				resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-				return resp, err
+				return nil, fmt.Errorf("缓存错误：%v", err)
 			}
 
 			if exist {
 				// 字段存在，该记录数量 + 1
-				_, err = cache.Redis.HIncrBy(context.Background(), key, strconv.FormatInt(req.UserId, 10), 1).Result()
+				_, err = cache.Redis.HIncrBy(cache.Ctx, key, strconv.FormatInt(req.UserId, 10), 1).Result()
 				if err != nil {
-					resp.StatusCode = exception.CacheErr
-					resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-					return resp, err
+					return nil, fmt.Errorf("缓存错误：%v", err)
 				}
 			}
 
 			// 加入喜欢set中，如果没有，构建缓存再加入set中
-			exists, err := cache.Redis.Exists(context.Background(), setKey).Result()
+			exists, err := cache.Redis.Exists(cache.Ctx, setKey).Result()
 			if err != nil {
-				log.Print(err)
+				return nil, fmt.Errorf("缓存错误：%v", err)
 			}
 
 			if exists > 0 {
-				err = cache.Redis.SAdd(context.Background(), setKey, strconv.FormatInt(req.VideoId, 10)).Err()
+				err = cache.Redis.SAdd(cache.Ctx, setKey, strconv.FormatInt(req.VideoId, 10)).Err()
 				if err != nil {
-					resp.StatusCode = exception.CacheErr
-					resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-					return resp, err
+					return nil, fmt.Errorf("缓存错误：%v", err)
 				}
 			} else {
 				err := buildFavoriteCache(req.UserId)
 				if err != nil {
-					log.Print(err)
+					return nil, fmt.Errorf("缓存错误：%v", err)
 				}
-				err = cache.Redis.SAdd(context.Background(), setKey, req.VideoId).Err()
+				err = cache.Redis.SAdd(cache.Ctx, setKey, req.VideoId).Err()
 				if err != nil {
-					resp.StatusCode = exception.CacheErr
-					resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-					return resp, err
+					return nil, fmt.Errorf("缓存错误：%v", err)
 				}
 			}
 		}
@@ -107,46 +98,38 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 			}
 
 			// 点赞成功，缓存中点赞总数 - 1
-			exist, err := cache.Redis.HExists(context.Background(), key, strconv.FormatInt(req.UserId, 10)).Result()
+			exist, err := cache.Redis.HExists(cache.Ctx, key, strconv.FormatInt(req.UserId, 10)).Result()
 			if err != nil {
-				resp.StatusCode = exception.CacheErr
-				resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-				return resp, err
+				return nil, fmt.Errorf("缓存错误：%v", err)
 			}
 
 			if exist {
 				// 字段存在，该记录数量 + 1
-				_, err = cache.Redis.HIncrBy(context.Background(), key, strconv.FormatInt(req.UserId, 10), -1).Result()
+				_, err = cache.Redis.HIncrBy(cache.Ctx, key, strconv.FormatInt(req.UserId, 10), -1).Result()
 				if err != nil {
-					resp.StatusCode = exception.CacheErr
-					resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-					return resp, err
+					return nil, fmt.Errorf("缓存错误：%v", err)
 				}
 			}
 
 			// 加入喜欢set中，如果没有，构建缓存再去掉set中数据
-			exists, err := cache.Redis.Exists(context.Background(), setKey).Result()
+			exists, err := cache.Redis.Exists(cache.Ctx, setKey).Result()
 			if err != nil {
-				log.Print(err)
+				return nil, fmt.Errorf("缓存错误：%v", err)
 			}
 
 			if exists > 0 {
-				err = cache.Redis.SRem(context.Background(), setKey, req.VideoId).Err()
+				err = cache.Redis.SRem(cache.Ctx, setKey, req.VideoId).Err()
 				if err != nil {
-					resp.StatusCode = exception.CacheErr
-					resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-					return resp, err
+					return nil, fmt.Errorf("缓存错误：%v", err)
 				}
 			} else {
 				err := buildFavoriteCache(req.UserId)
 				if err != nil {
-					log.Print(err)
+					return nil, fmt.Errorf("缓存错误：%v", err)
 				}
 				err = cache.Redis.SRem(context.Background(), setKey, req.VideoId).Err()
 				if err != nil {
-					resp.StatusCode = exception.CacheErr
-					resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-					return resp, err
+					return nil, fmt.Errorf("缓存错误：%v", err)
 				}
 			}
 		}
@@ -164,19 +147,15 @@ func (*VideoService) FavoriteList(ctx context.Context, req *service.FavoriteList
 	var videos []model.Video
 	key := fmt.Sprintf("%s:%s:%s", "user", "favorit_list", strconv.FormatInt(req.UserId, 10))
 
-	exits, err := cache.Redis.Exists(context.Background(), key).Result()
+	exits, err := cache.Redis.Exists(cache.Ctx, key).Result()
 	if err != nil {
-		resp.StatusCode = exception.CacheErr
-		resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-		return resp, err
+		return nil, fmt.Errorf("缓存错误：%v", err)
 	}
 
 	if exits > 0 {
-		videosString, err := cache.Redis.Get(context.Background(), key).Result()
+		videosString, err := cache.Redis.Get(cache.Ctx, key).Result()
 		if err != nil {
-			resp.StatusCode = exception.VideoUnExist
-			resp.StatusMsg = exception.GetMsg(exception.VideoUnExist)
-			return resp, err
+			return nil, fmt.Errorf("缓存错误：%v", err)
 		}
 		err = json.Unmarshal([]byte(videosString), &videos)
 		if err != nil {
@@ -202,11 +181,9 @@ func (*VideoService) FavoriteList(ctx context.Context, req *service.FavoriteList
 
 		// 放入缓存中
 		videosJson, _ := json.Marshal(videos)
-		err := cache.Redis.Set(context.Background(), key, videosJson, 30*time.Minute).Err()
+		err := cache.Redis.Set(cache.Ctx, key, videosJson, 30*time.Minute).Err()
 		if err != nil {
-			resp.StatusCode = exception.VideoUnExist
-			resp.StatusMsg = exception.GetMsg(exception.VideoUnExist)
-			return resp, err
+			return nil, fmt.Errorf("缓存错误：%v", err)
 		}
 	}
 
@@ -232,7 +209,7 @@ func buildFavoriteCache(userId int64) error {
 		videoIds[i] = video
 	}
 
-	err = cache.Redis.SAdd(context.Background(), key, videoIds...).Err()
+	err = cache.Redis.SAdd(cache.Ctx, key, videoIds...).Err()
 	if err != nil {
 		return err
 	}

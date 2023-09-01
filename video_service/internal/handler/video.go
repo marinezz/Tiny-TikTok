@@ -133,20 +133,16 @@ func (*VideoService) PublishAction(ctx context.Context, req *service.PublishActi
 	}
 
 	// 发布成功，缓存中作品总数 + 1，如果不存在缓存则不做操作
-	exist, err := cache.Redis.HExists(context.Background(), key, strconv.FormatInt(req.UserId, 10)).Result()
+	exist, err := cache.Redis.HExists(cache.Ctx, key, strconv.FormatInt(req.UserId, 10)).Result()
 	if err != nil {
-		resp.StatusCode = exception.CacheErr
-		resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-		return resp, err
+		return nil, fmt.Errorf("缓存错误：%v", err)
 	}
 
 	if exist {
 		// 字段存在，该记录数量 + 1
-		_, err = cache.Redis.HIncrBy(context.Background(), key, strconv.FormatInt(req.UserId, 10), 1).Result()
+		_, err = cache.Redis.HIncrBy(cache.Ctx, key, strconv.FormatInt(req.UserId, 10), 1).Result()
 		if err != nil {
-			resp.StatusCode = exception.CacheErr
-			resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-			return resp, updataErr
+			return nil, fmt.Errorf("缓存错误：%v", err)
 		}
 	}
 
@@ -163,19 +159,15 @@ func (*VideoService) PublishList(ctx context.Context, req *service.PublishListRe
 	key := fmt.Sprintf("%s:%s:%s", "user", "work_list", strconv.FormatInt(req.UserId, 10))
 
 	// 根据用户id找到所有的视频,先找缓存，再查数据库
-	exist, err := cache.Redis.Exists(context.Background(), key).Result()
+	exists, err := cache.Redis.Exists(cache.Ctx, key).Result()
 	if err != nil {
-		resp.StatusCode = exception.CacheErr
-		resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-		return resp, err
+		return nil, fmt.Errorf("缓存错误：%v", err)
 	}
 
-	if exist > 0 {
-		videosString, err := cache.Redis.Get(context.Background(), key).Result()
+	if exists > 0 {
+		videosString, err := cache.Redis.Get(cache.Ctx, key).Result()
 		if err != nil {
-			resp.StatusCode = exception.VideoUnExist
-			resp.StatusMsg = exception.GetMsg(exception.VideoUnExist)
-			return resp, err
+			return nil, fmt.Errorf("缓存错误：%v", err)
 		}
 		err = json.Unmarshal([]byte(videosString), &videos)
 		if err != nil {
@@ -190,11 +182,9 @@ func (*VideoService) PublishList(ctx context.Context, req *service.PublishListRe
 		}
 		// 放入缓存中
 		videosJson, _ := json.Marshal(videos)
-		err := cache.Redis.Set(context.Background(), key, videosJson, 30*time.Minute).Err()
+		err := cache.Redis.Set(cache.Ctx, key, videosJson, 30*time.Minute).Err()
 		if err != nil {
-			resp.StatusCode = exception.VideoUnExist
-			resp.StatusMsg = exception.GetMsg(exception.VideoUnExist)
-			return resp, err
+			return nil, fmt.Errorf("缓存错误：%v", err)
 		}
 	}
 
@@ -215,19 +205,15 @@ func (*VideoService) CountInfo(ctx context.Context, req *service.CountRequest) (
 		var count service.Count
 
 		// 获取赞的数量
-		exist, err := cache.Redis.HExists(context.Background(), "user:total_favorite", strconv.FormatInt(userId, 10)).Result()
+		exist, err := cache.Redis.HExists(cache.Ctx, "user:total_favorite", strconv.FormatInt(userId, 10)).Result()
 		if err != nil {
-			resp.StatusCode = exception.CacheErr
-			resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-			return resp, err
+			return nil, fmt.Errorf("缓存错误：%v", err)
 		}
 
 		if exist {
-			count.FavoriteCount, err = cache.Redis.HGet(context.Background(), "user:total_favorite", strconv.FormatInt(userId, 10)).Int64()
+			count.FavoriteCount, err = cache.Redis.HGet(cache.Ctx, "user:total_favorite", strconv.FormatInt(userId, 10)).Int64()
 			if err != nil {
-				resp.StatusCode = exception.CacheErr
-				resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-				return resp, err
+				return nil, fmt.Errorf("缓存错误：%v", err)
 			}
 		} else {
 			count.TotalFavorited, err = model.GetVideoInstance().GetFavoritedCount(userId)
@@ -238,28 +224,22 @@ func (*VideoService) CountInfo(ctx context.Context, req *service.CountRequest) (
 			}
 
 			// 放入缓存
-			err := cache.Redis.HSet(context.Background(), "user:total_favorite", strconv.FormatInt(userId, 10), count.TotalFavorited).Err()
+			err := cache.Redis.HSet(cache.Ctx, "user:total_favorite", strconv.FormatInt(userId, 10), count.TotalFavorited).Err()
 			if err != nil {
-				resp.StatusCode = exception.CacheErr
-				resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-				return resp, err
+				return nil, fmt.Errorf("缓存错误：%v", err)
 			}
 		}
 
 		// 获取作品数量
-		exist, err = cache.Redis.HExists(context.Background(), "user:work_count", strconv.FormatInt(userId, 10)).Result()
+		exist, err = cache.Redis.HExists(cache.Ctx, "user:work_count", strconv.FormatInt(userId, 10)).Result()
 		if err != nil {
-			resp.StatusCode = exception.CacheErr
-			resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-			return resp, err
+			return nil, fmt.Errorf("缓存错误：%v", err)
 		}
 		// 如果存在则读缓存
 		if exist {
-			count.WorkCount, err = cache.Redis.HGet(context.Background(), "user:work_count", strconv.FormatInt(userId, 10)).Int64()
+			count.WorkCount, err = cache.Redis.HGet(cache.Ctx, "user:work_count", strconv.FormatInt(userId, 10)).Int64()
 			if err != nil {
-				resp.StatusCode = exception.CacheErr
-				resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-				return resp, err
+				return nil, fmt.Errorf("缓存错误：%v", err)
 			}
 		} else {
 			// 不存在则查数据库
@@ -270,27 +250,21 @@ func (*VideoService) CountInfo(ctx context.Context, req *service.CountRequest) (
 				return resp, err
 			}
 			// 放入缓存
-			err := cache.Redis.HSet(context.Background(), "user:work_count", strconv.FormatInt(userId, 10), count.WorkCount).Err()
+			err := cache.Redis.HSet(cache.Ctx, "user:work_count", strconv.FormatInt(userId, 10), count.WorkCount).Err()
 			if err != nil {
-				resp.StatusCode = exception.CacheErr
-				resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-				return resp, err
+				return nil, fmt.Errorf("缓存错误：%v", err)
 			}
 		}
 
 		// 获取喜欢数量
-		exist, err = cache.Redis.HExists(context.Background(), "user:favorite_count", strconv.FormatInt(userId, 10)).Result()
+		exist, err = cache.Redis.HExists(cache.Ctx, "user:favorite_count", strconv.FormatInt(userId, 10)).Result()
 		if err != nil {
-			resp.StatusCode = exception.CacheErr
-			resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-			return resp, err
+			return nil, fmt.Errorf("缓存错误：%v", err)
 		}
 		if exist {
-			count.WorkCount, err = cache.Redis.HGet(context.Background(), "user:favorite_count", strconv.FormatInt(userId, 10)).Int64()
+			count.WorkCount, err = cache.Redis.HGet(cache.Ctx, "user:favorite_count", strconv.FormatInt(userId, 10)).Int64()
 			if err != nil {
-				resp.StatusCode = exception.CacheErr
-				resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-				return resp, err
+				return nil, fmt.Errorf("缓存错误：%v", err)
 			}
 		} else {
 			count.FavoriteCount, err = model.GetFavoriteInstance().GetFavoriteCount(userId)
@@ -301,11 +275,9 @@ func (*VideoService) CountInfo(ctx context.Context, req *service.CountRequest) (
 			}
 
 			// 放入缓存
-			err := cache.Redis.HSet(context.Background(), "user:favorite_count", strconv.FormatInt(userId, 10), count.FavoriteCount).Err()
+			err := cache.Redis.HSet(cache.Ctx, "user:favorite_count", strconv.FormatInt(userId, 10), count.FavoriteCount).Err()
 			if err != nil {
-				resp.StatusCode = exception.CacheErr
-				resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-				return resp, err
+				return nil, fmt.Errorf("缓存错误：%v", err)
 			}
 		}
 
@@ -326,13 +298,13 @@ func BuildVideo(videos []model.Video, userId int64) []*service.Video {
 		var isFavorite bool
 		key := fmt.Sprintf("%s:%s:%s", "user", "favorite_video", strconv.FormatInt(userId, 10))
 
-		exists, err := cache.Redis.Exists(context.Background(), key).Result()
+		exists, err := cache.Redis.Exists(cache.Ctx, key).Result()
 		if err != nil {
 			log.Print(err)
 		}
 
 		if exists > 0 {
-			isFavorite, err = cache.Redis.SIsMember(context.Background(), key, strconv.FormatInt(video.Id, 10)).Result()
+			isFavorite, err = cache.Redis.SIsMember(cache.Ctx, key, strconv.FormatInt(video.Id, 10)).Result()
 			if err != nil {
 				log.Print(err)
 			}
@@ -341,7 +313,7 @@ func BuildVideo(videos []model.Video, userId int64) []*service.Video {
 			if err != nil {
 				log.Print(err)
 			}
-			isFavorite, err = cache.Redis.SIsMember(context.Background(), key, strconv.FormatInt(video.Id, 10)).Result()
+			isFavorite, err = cache.Redis.SIsMember(cache.Ctx, key, strconv.FormatInt(video.Id, 10)).Result()
 			if err != nil {
 				log.Print(err)
 			}

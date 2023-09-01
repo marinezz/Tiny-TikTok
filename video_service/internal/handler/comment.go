@@ -114,19 +114,15 @@ func (*VideoService) CommentList(ctx context.Context, req *service.CommentListRe
 	var comments []model.Comment
 	key := fmt.Sprintf("%s:%s:%s", "video", "comment_list", strconv.FormatInt(req.VideoId, 10))
 
-	exist, err := cache.Redis.Exists(context.Background(), key).Result()
+	exist, err := cache.Redis.Exists(cache.Ctx, key).Result()
 	if err != nil {
-		resp.StatusCode = exception.CacheErr
-		resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-		return resp, err
+		return nil, fmt.Errorf("缓存错误：%v", err)
 	}
 
 	if exist > 0 {
-		commentsString, err := cache.Redis.Get(context.Background(), key).Result()
+		commentsString, err := cache.Redis.Get(cache.Ctx, key).Result()
 		if err != nil {
-			resp.StatusCode = exception.VideoUnExist
-			resp.StatusMsg = exception.GetMsg(exception.VideoUnExist)
-			return resp, err
+			return nil, fmt.Errorf("缓存错误：%v", err)
 		}
 		err = json.Unmarshal([]byte(commentsString), &comments)
 		if err != nil {
@@ -143,11 +139,9 @@ func (*VideoService) CommentList(ctx context.Context, req *service.CommentListRe
 
 		// 将查询结果放入缓存中
 		commentJson, _ := json.Marshal(&comments)
-		err = cache.Redis.Set(context.Background(), key, commentJson, 30*time.Minute).Err()
+		err = cache.Redis.Set(cache.Ctx, key, commentJson, 30*time.Minute).Err()
 		if err != nil {
-			resp.StatusCode = exception.CacheErr
-			resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-			return resp, err
+			return nil, fmt.Errorf("缓存错误：%v", err)
 		}
 	}
 

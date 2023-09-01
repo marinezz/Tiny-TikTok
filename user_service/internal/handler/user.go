@@ -94,20 +94,16 @@ func (*UserService) UserInfo(ctx context.Context, req *service.UserInfoRequest) 
 		var user *model.User
 		key := fmt.Sprintf("%s:%s:%s", "user", "info", strconv.FormatInt(userId, 10))
 
-		count, err := cache.Redis.Exists(context.Background(), key).Result()
+		exists, err := cache.Redis.Exists(cache.Ctx, key).Result()
 		if err != nil {
-			resp.StatusCode = exception.CacheErr
-			resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-			return resp, err
+			return nil, fmt.Errorf("缓存错误：%v", err)
 		}
 
-		if count > 0 {
+		if exists > 0 {
 			// 查询缓存
-			userString, err := cache.Redis.Get(context.Background(), key).Result()
+			userString, err := cache.Redis.Get(cache.Ctx, key).Result()
 			if err != nil {
-				resp.StatusCode = exception.CacheErr
-				resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-				return resp, err
+				return nil, fmt.Errorf("缓存错误：%v", err)
 			}
 			err = json.Unmarshal([]byte(userString), &user)
 			if err != nil {
@@ -124,11 +120,9 @@ func (*UserService) UserInfo(ctx context.Context, req *service.UserInfoRequest) 
 
 			// 将查询结果放入缓存中
 			userJson, _ := json.Marshal(&user)
-			err = cache.Redis.Set(context.Background(), key, userJson, 12*time.Hour).Err()
+			err = cache.Redis.Set(cache.Ctx, key, userJson, 12*time.Hour).Err()
 			if err != nil {
-				resp.StatusCode = exception.CacheErr
-				resp.StatusMsg = exception.GetMsg(exception.CacheErr)
-				return resp, err
+				return nil, fmt.Errorf("缓存错误：%v", err)
 			}
 
 		}
