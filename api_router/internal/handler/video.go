@@ -17,7 +17,7 @@ func Feed(ctx *gin.Context) {
 	var feedReq service.FeedRequest
 
 	// 判断是否带有参数
-	token, _ := ctx.Get("token")
+	token := ctx.Query("token")
 	if token == "" {
 		feedReq.UserId = -1
 	} else {
