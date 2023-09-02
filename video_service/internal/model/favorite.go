@@ -29,10 +29,10 @@ func GetFavoriteInstance() *FavoriteModel {
 }
 
 // AddFavorite 创建点赞
-func (*FavoriteModel) AddFavorite(favorite *Favorite) error {
+func (*FavoriteModel) AddFavorite(tx *gorm.DB, favorite *Favorite) error {
 	flake, _ := snowFlake.NewSnowFlake(7, 2)
 	favorite.Id = flake.NextId()
-	result := DB.Create(&favorite)
+	result := tx.Create(&favorite)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -55,8 +55,8 @@ func (*FavoriteModel) IsFavorite(userId int64, videoId int64) (bool, error) {
 }
 
 // DeleteFavorite 删除点赞
-func (*FavoriteModel) DeleteFavorite(favorite *Favorite) error {
-	result := DB.Where("user_id=? AND video_id=?", favorite.UserId, favorite.VideoId).First(&favorite)
+func (*FavoriteModel) DeleteFavorite(tx *gorm.DB, favorite *Favorite) error {
+	result := tx.Where("user_id=? AND video_id=?", favorite.UserId, favorite.VideoId).First(&favorite)
 	// 发生除没找到记录的其它错误
 	if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return result.Error
@@ -64,7 +64,7 @@ func (*FavoriteModel) DeleteFavorite(favorite *Favorite) error {
 	// 如果找到了记录，更新is_favorite置为0
 	if result.RowsAffected > 0 {
 		favorite.IsFavorite = false
-		result = DB.Save(&favorite)
+		result = tx.Save(&favorite)
 		if result.Error != nil {
 			return result.Error
 		}

@@ -13,7 +13,7 @@ import (
 	"video/pkg/cache"
 )
 
-// FavoriteAction 点赞操作
+// FavoriteAction 点赞操作 todo 也可以设计成定时任务
 func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteActionRequest) (resp *service.FavoriteActionResponse, err error) {
 	resp = new(service.FavoriteActionResponse)
 	key := fmt.Sprintf("%s:%s", "user", "favorite_count")
@@ -52,7 +52,8 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 		}
 
 		// 操作favorite表
-		err = model.GetFavoriteInstance().AddFavorite(&favorite)
+		tx := model.DB.Begin()
+		err = model.GetFavoriteInstance().AddFavorite(tx, &favorite)
 		if err != nil {
 			//tx.Rollback()
 			resp.StatusCode = exception.FavoriteErr
@@ -70,6 +71,7 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 			// 字段存在，该记录数量 + 1
 			_, err = cache.Redis.HIncrBy(cache.Ctx, key, strconv.FormatInt(req.UserId, 10), 1).Result()
 			if err != nil {
+				tx.Rollback()
 				return nil, fmt.Errorf("缓存错误：%v", err)
 			}
 		}
@@ -77,8 +79,11 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 		// 加入喜欢set中，如果没有，构建缓存再加入set中
 		err = cache.Redis.SAdd(cache.Ctx, setKey, strconv.FormatInt(req.UserId, 10)).Err()
 		if err != nil {
+			tx.Rollback()
 			return nil, fmt.Errorf("缓存错误：%v", err)
 		}
+
+		tx.Commit()
 	}
 
 	// 取消赞操作
@@ -97,9 +102,9 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 		}
 
 		// 操作favorite表
-		err = model.GetFavoriteInstance().DeleteFavorite(&favorite)
+		tx := model.DB.Begin()
+		err = model.GetFavoriteInstance().DeleteFavorite(tx, &favorite)
 		if err != nil {
-			//tx.Rollback()
 			resp.StatusCode = exception.CancelFavoriteErr
 			resp.StatusMsg = exception.GetMsg(exception.CancelFavoriteErr)
 			return resp, err
@@ -115,6 +120,7 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 			// 字段存在，该记录数量 + 1
 			_, err = cache.Redis.HIncrBy(cache.Ctx, key, strconv.FormatInt(req.UserId, 10), -1).Result()
 			if err != nil {
+				tx.Rollback()
 				return nil, fmt.Errorf("缓存错误：%v", err)
 			}
 		}
@@ -122,8 +128,11 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 		// set中删除
 		err = cache.Redis.SRem(cache.Ctx, setKey, req.UserId).Err()
 		if err != nil {
+			tx.Rollback()
 			return nil, fmt.Errorf("缓存错误：%v", err)
 		}
+
+		tx.Commit()
 	}
 
 	resp.StatusCode = exception.SUCCESS
@@ -224,6 +233,7 @@ func buildVideoFavorite(videoId int64) error {
 		return err
 	}
 
+	// 如果点赞数量为空，则不会创建cache，所以设计一个先放入，再删除，创建一个空记录。避免反复查表
 	userIds := make([]interface{}, len(userIdList))
 	for i, video := range userIdList {
 		userIds[i] = video

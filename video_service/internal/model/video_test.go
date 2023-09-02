@@ -45,14 +45,14 @@ func TestFavoriteModel_DeleteFavorite(t *testing.T) {
 // 测试创建评论
 func TestCommentModel_CreateComment(t *testing.T) {
 	InitDb()
-
+	tx := DB.Begin()
 	comment := Comment{
 		UserId:  111,
 		VideoId: 222,
 		Content: "喜欢",
 	}
-	GetCommentInstance().CreateComment(&comment)
-
+	GetCommentInstance().CreateComment(tx, &comment)
+	tx.Commit()
 }
 
 // 测试删除评论

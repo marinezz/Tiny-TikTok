@@ -32,7 +32,8 @@ func (*VideoService) CommentAction(ctx context.Context, req *service.CommentActi
 		comment.CreatAt = time
 
 		// 事务中执行创建操作
-		id, err := model.GetCommentInstance().CreateComment(&comment)
+		tx := model.DB.Begin()
+		id, err := model.GetCommentInstance().CreateComment(tx, &comment)
 		if err != nil {
 			resp.StatusCode = exception.CommentErr
 			resp.StatusMsg = exception.GetMsg(exception.CommentErr)
@@ -51,8 +52,11 @@ func (*VideoService) CommentAction(ctx context.Context, req *service.CommentActi
 
 		err = cache.Redis.ZAdd(cache.Ctx, key, &member).Err()
 		if err != nil {
+			tx.Rollback()
 			return nil, fmt.Errorf("缓存错误：%v", err)
 		}
+
+		tx.Commit()
 
 		commentResp := &service.Comment{
 			Id:      id,
@@ -70,8 +74,8 @@ func (*VideoService) CommentAction(ctx context.Context, req *service.CommentActi
 	}
 
 	// 删除评论
-
-	commentInstance, err := model.GetCommentInstance().GetComment(req.CommentId)
+	tx := model.DB.Begin()
+	commentInstance, err := model.GetCommentInstance().GetComment(tx, req.CommentId)
 	commentMarshal, _ := json.Marshal(commentInstance)
 
 	err = model.GetCommentInstance().DeleteComment(req.CommentId)
@@ -88,8 +92,11 @@ func (*VideoService) CommentAction(ctx context.Context, req *service.CommentActi
 	count, err := cache.Redis.ZRem(cache.Ctx, key, string(commentMarshal)).Result()
 	log.Printf("删除了： %v 条记录", count)
 	if err != nil {
+		tx.Rollback()
 		return nil, fmt.Errorf("缓存错误：%v", err)
 	}
+
+	tx.Commit()
 
 	resp.StatusCode = exception.SUCCESS
 	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)

@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+	"gorm.io/gorm"
 	"sync"
 	"time"
 	"utils/snowFlake"
@@ -32,13 +33,13 @@ func GetCommentInstance() *CommentModel {
 }
 
 // CreateComment 新增评论
-func (*CommentModel) CreateComment(comment *Comment) (id int64, err error) {
+func (*CommentModel) CreateComment(tx *gorm.DB, comment *Comment) (id int64, err error) {
 	flake, _ := snowFlake.NewSnowFlake(7, 2)
 	comment.Id = flake.NextId()
 	comment.CommentStatus = true
 	comment.CreatAt = time.Now()
 
-	result := DB.Create(&comment)
+	result := tx.Create(&comment)
 	if result.Error != nil {
 		return -1, result.Error
 	}
@@ -80,10 +81,10 @@ func (*CommentModel) CommentList(videoId int64) ([]Comment, error) {
 }
 
 // GetComment 根据评论ID找到具体评论
-func (*CommentModel) GetComment(commentId int64) (Comment, error) {
+func (*CommentModel) GetComment(tx *gorm.DB, commentId int64) (Comment, error) {
 	comment := Comment{}
 
-	result := DB.Table("comment").
+	result := tx.Table("comment").
 		Where("id = ?", commentId).
 		First(&comment)
 	if result.Error != nil {
