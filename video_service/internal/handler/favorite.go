@@ -18,6 +18,7 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 	resp = new(service.FavoriteActionResponse)
 	key := fmt.Sprintf("%s:%s", "user", "favorite_count")
 	setKey := fmt.Sprintf("%s:%s:%s", "video", "favorite_video", strconv.FormatInt(req.VideoId, 10))
+	favoriteKey := fmt.Sprintf("%s:%s:%s", "user", "favorit_list", strconv.FormatInt(req.UserId, 10))
 
 	action := req.ActionType
 	var favorite model.Favorite
@@ -83,6 +84,20 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 			return nil, fmt.Errorf("缓存错误：%v", err)
 		}
 
+		// 删除喜欢列表缓存
+		err = cache.Redis.Del(cache.Ctx, favoriteKey).Err()
+		if err != nil {
+			return nil, fmt.Errorf("缓存错误：%v", err)
+		}
+		defer func() {
+			go func() {
+				//延时3秒执行
+				time.Sleep(time.Second * 3)
+				//再次删除缓存
+				cache.Redis.Del(cache.Ctx, favoriteKey)
+			}()
+		}()
+
 		tx.Commit()
 	}
 
@@ -131,6 +146,20 @@ func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteAc
 			tx.Rollback()
 			return nil, fmt.Errorf("缓存错误：%v", err)
 		}
+
+		// 删除喜欢列表缓存
+		err = cache.Redis.Del(cache.Ctx, favoriteKey).Err()
+		if err != nil {
+			return nil, fmt.Errorf("缓存错误：%v", err)
+		}
+		defer func() {
+			go func() {
+				//延时3秒执行
+				time.Sleep(time.Second * 3)
+				//再次删除缓存
+				cache.Redis.Del(cache.Ctx, favoriteKey)
+			}()
+		}()
 
 		tx.Commit()
 	}

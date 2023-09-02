@@ -20,8 +20,8 @@ func TestCache(t *testing.T) {
 	model.InitDb()
 	cache.InitRedis()
 	key := "video:comment_list:4395719587667968"
-
-	comment, _ := model.GetCommentInstance().GetComment(5146154783088640)
+	tx := model.DB.Begin()
+	comment, _ := model.GetCommentInstance().GetComment(tx, 5146154783088640)
 	commentJson, _ := json.Marshal(comment)
 
 	removedCount, err := cache.Redis.ZRem(cache.Ctx, key, string(commentJson)).Result()

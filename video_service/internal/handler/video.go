@@ -144,6 +144,21 @@ func (*VideoService) PublishAction(ctx context.Context, req *service.PublishActi
 		}
 	}
 
+	// 发布成功延时双删发布列表
+	workKey := fmt.Sprintf("%s:%s:%s", "user", "work_list", strconv.FormatInt(req.UserId, 10))
+	err = cache.Redis.Del(cache.Ctx, workKey).Err()
+	if err != nil {
+		return nil, fmt.Errorf("缓存错误：%v", err)
+	}
+	defer func() {
+		go func() {
+			//延时3秒执行
+			time.Sleep(time.Second * 3)
+			//再次删除缓存
+			cache.Redis.Del(cache.Ctx, workKey)
+		}()
+	}()
+
 	resp.StatusCode = exception.SUCCESS
 	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
 
@@ -180,7 +195,7 @@ func (*VideoService) PublishList(ctx context.Context, req *service.PublishListRe
 		}
 		// 放入缓存中
 		videosJson, _ := json.Marshal(videos)
-		err := cache.Redis.Set(cache.Ctx, key, videosJson, 30*time.Minute).Err()
+		err := cache.Redis.Set(cache.Ctx, key, videosJson, 12*time.Hour).Err()
 		if err != nil {
 			return nil, fmt.Errorf("缓存错误：%v", err)
 		}

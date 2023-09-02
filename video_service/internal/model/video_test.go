@@ -25,21 +25,23 @@ func TestFavoriteModel_DeleteFavorite2(t *testing.T) {
 // 测试新增喜欢记录
 func TestFavoriteModel_AddFavorite(t *testing.T) {
 	InitDb()
+	tx := DB.Begin()
 	favorite := Favorite{
 		UserId:  123,
 		VideoId: 456,
 	}
-	GetFavoriteInstance().AddFavorite(&favorite)
+	GetFavoriteInstance().AddFavorite(tx, &favorite)
 }
 
 // 测试软删除喜欢记录
 func TestFavoriteModel_DeleteFavorite(t *testing.T) {
 	InitDb()
+	tx := DB.Begin()
 	favorite := Favorite{
 		UserId:  123,
 		VideoId: 456,
 	}
-	GetFavoriteInstance().DeleteFavorite(&favorite)
+	GetFavoriteInstance().DeleteFavorite(tx, &favorite)
 }
 
 // 测试创建评论
@@ -134,6 +136,7 @@ func TestFavoriteModel_FavoriteUserList(t *testing.T) {
 
 func TestCommentModel_GetComment(t *testing.T) {
 	InitDb()
-	comment, _ := commentModel.GetComment(4419719369990144)
+	tx := DB.Begin()
+	comment, _ := commentModel.GetComment(tx, 4419719369990144)
 	log.Print(comment)
 }
