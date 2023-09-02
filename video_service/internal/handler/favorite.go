@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 	"utils/exception"
@@ -16,122 +17,112 @@ import (
 func (*VideoService) FavoriteAction(ctx context.Context, req *service.FavoriteActionRequest) (resp *service.FavoriteActionResponse, err error) {
 	resp = new(service.FavoriteActionResponse)
 	key := fmt.Sprintf("%s:%s", "user", "favorite_count")
-	setKey := fmt.Sprintf("%s:%s:%s", "user", "favorite_video", strconv.FormatInt(req.UserId, 10))
+	setKey := fmt.Sprintf("%s:%s:%s", "video", "favorite_video", strconv.FormatInt(req.VideoId, 10))
 
 	action := req.ActionType
 	var favorite model.Favorite
 	favorite.UserId = req.UserId
 	favorite.VideoId = req.VideoId
+
+	// 查看缓存是否存在，不存在这构建一次缓存，避免极端情况
+	setExists, err := cache.Redis.Exists(cache.Ctx, setKey).Result()
+	if err != nil {
+		return nil, fmt.Errorf("缓存错误：%v", err)
+	}
+	if setExists == 0 {
+		err := buildVideoFavorite(req.VideoId)
+		if err != nil {
+			return nil, fmt.Errorf("缓存错误：%v", err)
+		}
+	}
+
 	// 点赞操作
 	if action == 1 {
-		// 操作favorite表
-		isAdd, err := model.GetFavoriteInstance().AddFavorite(&favorite)
+		// 查看缓存，避免重复点赞
+		result, err := cache.Redis.SIsMember(cache.Ctx, setKey, req.UserId).Result()
 		if err != nil {
+			return nil, fmt.Errorf("缓存错误：%v", err)
+		}
+
+		if result {
+			// 重复点赞
 			resp.StatusCode = exception.FavoriteErr
 			resp.StatusMsg = exception.GetMsg(exception.FavoriteErr)
 			return resp, err
 		}
 
-		// 操作video表，喜欢记录 + 1
-		if isAdd == true {
-			err := model.GetVideoInstance().AddFavoriteCount(req.VideoId)
-			if err != nil {
-				resp.StatusCode = exception.VideoFavoriteErr
-				resp.StatusMsg = exception.GetMsg(exception.VideoFavoriteErr)
-				return resp, err
-			}
+		// 操作favorite表
+		err = model.GetFavoriteInstance().AddFavorite(&favorite)
+		if err != nil {
+			//tx.Rollback()
+			resp.StatusCode = exception.FavoriteErr
+			resp.StatusMsg = exception.GetMsg(exception.FavoriteErr)
+			return resp, err
+		}
 
-			// 点赞成功，缓存中点赞总数 + 1
-			exist, err := cache.Redis.HExists(cache.Ctx, key, strconv.FormatInt(req.UserId, 10)).Result()
-			if err != nil {
-				return nil, fmt.Errorf("缓存错误：%v", err)
-			}
+		// 点赞成功，缓存中点赞总数 + 1
+		exist, err := cache.Redis.HExists(cache.Ctx, key, strconv.FormatInt(req.UserId, 10)).Result()
+		if err != nil {
+			return nil, fmt.Errorf("缓存错误：%v", err)
+		}
 
-			if exist {
-				// 字段存在，该记录数量 + 1
-				_, err = cache.Redis.HIncrBy(cache.Ctx, key, strconv.FormatInt(req.UserId, 10), 1).Result()
-				if err != nil {
-					return nil, fmt.Errorf("缓存错误：%v", err)
-				}
-			}
-
-			// 加入喜欢set中，如果没有，构建缓存再加入set中
-			exists, err := cache.Redis.Exists(cache.Ctx, setKey).Result()
+		if exist {
+			// 字段存在，该记录数量 + 1
+			_, err = cache.Redis.HIncrBy(cache.Ctx, key, strconv.FormatInt(req.UserId, 10), 1).Result()
 			if err != nil {
 				return nil, fmt.Errorf("缓存错误：%v", err)
 			}
+		}
 
-			if exists > 0 {
-				err = cache.Redis.SAdd(cache.Ctx, setKey, strconv.FormatInt(req.VideoId, 10)).Err()
-				if err != nil {
-					return nil, fmt.Errorf("缓存错误：%v", err)
-				}
-			} else {
-				err := buildFavoriteCache(req.UserId)
-				if err != nil {
-					return nil, fmt.Errorf("缓存错误：%v", err)
-				}
-				err = cache.Redis.SAdd(cache.Ctx, setKey, req.VideoId).Err()
-				if err != nil {
-					return nil, fmt.Errorf("缓存错误：%v", err)
-				}
-			}
+		// 加入喜欢set中，如果没有，构建缓存再加入set中
+		err = cache.Redis.SAdd(cache.Ctx, setKey, strconv.FormatInt(req.UserId, 10)).Err()
+		if err != nil {
+			return nil, fmt.Errorf("缓存错误：%v", err)
 		}
 	}
 
 	// 取消赞操作
 	if action == 2 {
-		// 操作favorite表
-		err, isDelete := model.GetFavoriteInstance().DeleteFavorite(&favorite)
+		// 查看缓存，避免重复点删除
+		result, err := cache.Redis.SIsMember(cache.Ctx, setKey, req.UserId).Result()
 		if err != nil {
+			return nil, fmt.Errorf("缓存错误：%v", err)
+		}
+
+		if result == false {
+			// 重复删除
 			resp.StatusCode = exception.CancelFavoriteErr
 			resp.StatusMsg = exception.GetMsg(exception.CancelFavoriteErr)
 			return resp, err
 		}
-		// 操作video表
-		if isDelete == true {
-			err := model.GetVideoInstance().DeleteFavoriteCount(req.VideoId)
-			if err != nil {
-				resp.StatusCode = exception.VideoFavoriteErr
-				resp.StatusMsg = exception.GetMsg(exception.VideoFavoriteErr)
-				return resp, err
-			}
 
-			// 点赞成功，缓存中点赞总数 - 1
-			exist, err := cache.Redis.HExists(cache.Ctx, key, strconv.FormatInt(req.UserId, 10)).Result()
-			if err != nil {
-				return nil, fmt.Errorf("缓存错误：%v", err)
-			}
+		// 操作favorite表
+		err = model.GetFavoriteInstance().DeleteFavorite(&favorite)
+		if err != nil {
+			//tx.Rollback()
+			resp.StatusCode = exception.CancelFavoriteErr
+			resp.StatusMsg = exception.GetMsg(exception.CancelFavoriteErr)
+			return resp, err
+		}
 
-			if exist {
-				// 字段存在，该记录数量 + 1
-				_, err = cache.Redis.HIncrBy(cache.Ctx, key, strconv.FormatInt(req.UserId, 10), -1).Result()
-				if err != nil {
-					return nil, fmt.Errorf("缓存错误：%v", err)
-				}
-			}
+		// 点赞成功，缓存中点赞总数 - 1
+		exist, err := cache.Redis.HExists(cache.Ctx, key, strconv.FormatInt(req.UserId, 10)).Result()
+		if err != nil {
+			return nil, fmt.Errorf("缓存错误：%v", err)
+		}
 
-			// 加入喜欢set中，如果没有，构建缓存再去掉set中数据
-			exists, err := cache.Redis.Exists(cache.Ctx, setKey).Result()
+		if exist {
+			// 字段存在，该记录数量 + 1
+			_, err = cache.Redis.HIncrBy(cache.Ctx, key, strconv.FormatInt(req.UserId, 10), -1).Result()
 			if err != nil {
 				return nil, fmt.Errorf("缓存错误：%v", err)
 			}
+		}
 
-			if exists > 0 {
-				err = cache.Redis.SRem(cache.Ctx, setKey, req.VideoId).Err()
-				if err != nil {
-					return nil, fmt.Errorf("缓存错误：%v", err)
-				}
-			} else {
-				err := buildFavoriteCache(req.UserId)
-				if err != nil {
-					return nil, fmt.Errorf("缓存错误：%v", err)
-				}
-				err = cache.Redis.SRem(context.Background(), setKey, req.VideoId).Err()
-				if err != nil {
-					return nil, fmt.Errorf("缓存错误：%v", err)
-				}
-			}
+		// set中删除
+		err = cache.Redis.SRem(cache.Ctx, setKey, req.UserId).Err()
+		if err != nil {
+			return nil, fmt.Errorf("缓存错误：%v", err)
 		}
 	}
 
@@ -194,25 +185,78 @@ func (*VideoService) FavoriteList(ctx context.Context, req *service.FavoriteList
 	return resp, nil
 }
 
-// 构建点赞视频缓存
-func buildFavoriteCache(userId int64) error {
-	key := fmt.Sprintf("%s:%s:%s", "user", "favorite_video", strconv.FormatInt(userId, 10))
+// 查询缓存，判断是否喜欢
+func isFavorite(userId int64, videoId int64) bool {
+	var isFavorite bool
+	key := fmt.Sprintf("%s:%s:%s", "video", "favorite_video", strconv.FormatInt(videoId, 10))
+
+	exists, err := cache.Redis.Exists(cache.Ctx, key).Result()
+	if err != nil {
+		log.Print(err)
+	}
+
+	if exists > 0 {
+		isFavorite, err = cache.Redis.SIsMember(cache.Ctx, key, strconv.FormatInt(userId, 10)).Result()
+		if err != nil {
+			log.Print(err)
+		}
+	} else {
+		err := buildVideoFavorite(videoId)
+		if err != nil {
+			log.Print(err)
+		}
+		isFavorite, err = cache.Redis.SIsMember(cache.Ctx, key, strconv.FormatInt(userId, 10)).Result()
+		if err != nil {
+			log.Print(err)
+		}
+	}
+
+	return isFavorite
+}
+
+// 构建视频点赞缓存
+func buildVideoFavorite(videoId int64) error {
+	key := fmt.Sprintf("%s:%s:%s", "video", "favorite_video", strconv.FormatInt(videoId, 10))
 
 	// 查询出所有喜欢的视频
-	favoriteVideoList, err := model.GetFavoriteInstance().FavoriteVideoList(userId)
+	userIdList, err := model.GetFavoriteInstance().FavoriteUserList(videoId)
 	if err != nil {
 		return err
 	}
 
-	videoIds := make([]interface{}, len(favoriteVideoList))
-	for i, video := range favoriteVideoList {
-		videoIds[i] = video
+	userIds := make([]interface{}, len(userIdList))
+	for i, video := range userIdList {
+		userIds[i] = video
 	}
 
-	err = cache.Redis.SAdd(cache.Ctx, key, videoIds...).Err()
+	err = cache.Redis.SAdd(cache.Ctx, key, userIds...).Err()
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+// 通过缓存查询视频的获赞数量
+func getFavoriteCount(videoId int64) int64 {
+	setKey := fmt.Sprintf("%s:%s:%s", "video", "favorite_video", strconv.FormatInt(videoId, 10))
+
+	// 查看缓存是否存在，不存在这构建一次缓存，避免极端情况
+	setExists, err := cache.Redis.Exists(cache.Ctx, setKey).Result()
+	if err != nil {
+		log.Print(err)
+	}
+
+	if setExists == 0 {
+		err := buildVideoFavorite(videoId)
+		if err != nil {
+			log.Print(err)
+		}
+	}
+
+	count, err := cache.Redis.SCard(cache.Ctx, setKey).Result()
+	if err != nil {
+		log.Print(err)
+	}
+	return count
 }

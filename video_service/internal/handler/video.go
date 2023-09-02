@@ -98,13 +98,11 @@ func (*VideoService) PublishAction(ctx context.Context, req *service.PublishActi
 		defer wg.Done()
 		// 创建video
 		video := model.Video{
-			AuthId:        req.UserId,
-			Title:         title,
-			CoverUrl:      pictureUrl,
-			PlayUrl:       videoUrl,
-			FavoriteCount: 0,
-			CommentCount:  0,
-			CreatAt:       time.Now(),
+			AuthId:   req.UserId,
+			Title:    title,
+			CoverUrl: pictureUrl,
+			PlayUrl:  videoUrl,
+			CreatAt:  time.Now(),
 		}
 		creatErr = model.GetVideoInstance().Create(&video)
 	}()
@@ -295,38 +293,17 @@ func BuildVideo(videos []model.Video, userId int64) []*service.Video {
 
 	for _, video := range videos {
 		// 查询是否有喜欢的缓存，如果有，比对缓存，如果没有，构建缓存再查缓存
-		var isFavorite bool
-		key := fmt.Sprintf("%s:%s:%s", "user", "favorite_video", strconv.FormatInt(userId, 10))
-
-		exists, err := cache.Redis.Exists(cache.Ctx, key).Result()
-		if err != nil {
-			log.Print(err)
-		}
-
-		if exists > 0 {
-			isFavorite, err = cache.Redis.SIsMember(cache.Ctx, key, strconv.FormatInt(video.Id, 10)).Result()
-			if err != nil {
-				log.Print(err)
-			}
-		} else {
-			err := buildFavoriteCache(userId)
-			if err != nil {
-				log.Print(err)
-			}
-			isFavorite, err = cache.Redis.SIsMember(cache.Ctx, key, strconv.FormatInt(video.Id, 10)).Result()
-			if err != nil {
-				log.Print(err)
-			}
-		}
-
+		favorite := isFavorite(userId, video.Id)
+		favoriteCount := getFavoriteCount(video.Id)
+		commentCount := getCommentCount(video.Id)
 		videoResp = append(videoResp, &service.Video{
 			Id:            video.Id,
 			AuthId:        video.AuthId,
 			PlayUrl:       video.PlayUrl,
 			CoverUrl:      video.CoverUrl,
-			FavoriteCount: video.FavoriteCount,
-			CommentCount:  video.CommentCount,
-			IsFavorite:    isFavorite,
+			FavoriteCount: favoriteCount,
+			CommentCount:  commentCount,
+			IsFavorite:    favorite,
 			Title:         video.Title,
 		})
 	}
@@ -338,13 +315,15 @@ func BuildVideoForFavorite(videos []model.Video, isFavorite bool) []*service.Vid
 	var videoResp []*service.Video
 
 	for _, video := range videos {
+		favoriteCount := getFavoriteCount(video.Id)
+		commentCount := getCommentCount(video.Id)
 		videoResp = append(videoResp, &service.Video{
 			Id:            video.Id,
 			AuthId:        video.AuthId,
 			PlayUrl:       video.PlayUrl,
 			CoverUrl:      video.CoverUrl,
-			FavoriteCount: video.FavoriteCount,
-			CommentCount:  video.CommentCount,
+			FavoriteCount: favoriteCount,
+			CommentCount:  commentCount,
 			IsFavorite:    isFavorite,
 			Title:         video.Title,
 		})
