@@ -98,6 +98,17 @@ func (*FavoriteModel) GetFavoriteCount(userId int64) (int64, error) {
 	return count, nil
 }
 
+// GetVideoFavoriteCount 获取视频货站数量
+func (*FavoriteModel) GetVideoFavoriteCount(videoId int64) (int64, error) {
+	var count int64
+
+	DB.Table("favorite").
+		Where("video_id=? AND is_favorite=?", videoId, true).
+		Count(&count)
+
+	return count, nil
+}
+
 // FavoriteUserList 根据视频找到所有点赞用户的id
 func (*FavoriteModel) FavoriteUserList(videoId int64) ([]int64, error) {
 	var userIds []int64
