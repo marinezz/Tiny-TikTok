@@ -5,7 +5,7 @@ package discovery
 import (
 	"api_router/internal/service"
 	"api_router/pkg/logger"
-	"api_router/pkg/wrapper"
+	//"api_router/pkg/wrapper"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -66,9 +66,9 @@ func Resolver() map[string]interface{} {
 	logger.Log.Info("获取社交服务实例--成功--")
 	serveInstance["social_service"] = socialClient
 
-	wrapper.NewWrapper("user_service")
-	wrapper.NewWrapper("video_service")
-	wrapper.NewWrapper("social_service")
+	//wrapper.NewWrapper("user_service")
+	//wrapper.NewWrapper("video_service")
+	//wrapper.NewWrapper("social_service")
 
 	return serveInstance
 }
