@@ -7,6 +7,7 @@ import (
 	"log"
 	"testing"
 	"time"
+	"video/config"
 	"video/internal/model"
 	"video/pkg/cache"
 )
@@ -189,4 +190,11 @@ func TestZset(t *testing.T) {
 		// ZSET不为空
 		println("ZSET不为空")
 	}
+}
+
+func TestMQ(t *testing.T) {
+	config.InitConfig() // 初始话配置文件
+	model.InitDb()      // 初始化数据库
+	cache.InitRedis()   // 初始化缓
+	PublishVideo()
 }

@@ -38,3 +38,13 @@ func DbDnsInit() string {
 
 	return dns
 }
+
+// InitRabbitMQUrl 拼接rabbitMQ连接地址
+func InitRabbitMQUrl() string {
+	user := viper.GetString("rabbitMQ.user")
+	password := viper.GetString("rabbitMQ.password")
+	address := viper.GetString("rabbitMQ.address")
+
+	url := strings.Join([]string{"amqp://", user, ":", password, "@", address, "/"}, "")
+	return url
+}

@@ -21,3 +21,8 @@ oss:
   endpoint: https://oss-cn-chengdu.aliyuncs.com
   accessKeyId: LTAI5t8nzWHJ1tm92ZPUKods
   accessKeySecret: oeQsHP77JHKhpx6bgEVT4WGUAYY8bh
+
+rabbitMQ:
+  user: guest
+  password: guest
+  address: localhost:5672
