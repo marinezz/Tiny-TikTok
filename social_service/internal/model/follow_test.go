@@ -10,7 +10,7 @@ func TestFollowModel_FollowAction(t *testing.T) {
 	follow := Follow{
 		UserId:   1,
 		ToUserId: 2,
-		IsFollow: 1,
+		IsFollow: 2,
 	}
 	err := GetFollowInstance().FollowAction(&follow)
 	fmt.Println(err)

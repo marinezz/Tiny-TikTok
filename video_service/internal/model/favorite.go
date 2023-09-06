@@ -29,37 +29,15 @@ func GetFavoriteInstance() *FavoriteModel {
 }
 
 // AddFavorite 创建点赞
-func (*FavoriteModel) AddFavorite(favorite *Favorite) (bool, error) {
-	result := DB.Where("user_id=? AND video_id=?", favorite.UserId, favorite.VideoId).First(&favorite)
-	// 发生除没找到记录的其它错误
-	if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		return false, result.Error
+func (*FavoriteModel) AddFavorite(tx *gorm.DB, favorite *Favorite) error {
+	flake, _ := snowFlake.NewSnowFlake(7, 2)
+	favorite.Id = flake.NextId()
+	result := tx.Create(&favorite)
+	if result.Error != nil {
+		return result.Error
 	}
 
-	// 判断是否需要视频表中创建新的记录
-	isAdd := false
-
-	// 如果找到了记录，更新is_favorite置为1
-	if result.RowsAffected > 0 {
-		if favorite.IsFavorite == false {
-			isAdd = true
-			favorite.IsFavorite = true
-			result = DB.Save(&favorite)
-			if result.Error != nil {
-				return false, result.Error
-			}
-		}
-	} else {
-		// 否则创建新记录
-		flake, _ := snowFlake.NewSnowFlake(7, 2)
-		favorite.Id = flake.NextId()
-		result = DB.Create(&favorite)
-		isAdd = true
-		if result.Error != nil {
-			return false, result.Error
-		}
-	}
-	return isAdd, nil
+	return nil
 }
 
 // IsFavorite 根据用户id和视频id获取点赞状态
@@ -77,27 +55,22 @@ func (*FavoriteModel) IsFavorite(userId int64, videoId int64) (bool, error) {
 }
 
 // DeleteFavorite 删除点赞
-func (*FavoriteModel) DeleteFavorite(favorite *Favorite) (error, bool) {
-	result := DB.Where("user_id=? AND video_id=?", favorite.UserId, favorite.VideoId).First(&favorite)
+func (*FavoriteModel) DeleteFavorite(tx *gorm.DB, favorite *Favorite) error {
+	result := tx.Where("user_id=? AND video_id=?", favorite.UserId, favorite.VideoId).First(&favorite)
 	// 发生除没找到记录的其它错误
 	if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		return result.Error, false
+		return result.Error
 	}
-	isDelete := false
 	// 如果找到了记录，更新is_favorite置为0
 	if result.RowsAffected > 0 {
-		if favorite.IsFavorite == true {
-			isDelete = true
-
-			favorite.IsFavorite = false
-			result = DB.Save(&favorite)
-			if result.Error != nil {
-				return result.Error, false
-			}
+		favorite.IsFavorite = false
+		result = tx.Save(&favorite)
+		if result.Error != nil {
+			return result.Error
 		}
 	}
 
-	return nil, isDelete
+	return nil
 }
 
 // FavoriteVideoList 根据用户Id获取所有喜欢的视频id
@@ -123,4 +96,29 @@ func (*FavoriteModel) GetFavoriteCount(userId int64) (int64, error) {
 		Count(&count)
 
 	return count, nil
+}
+
+// GetVideoFavoriteCount 获取视频货站数量
+func (*FavoriteModel) GetVideoFavoriteCount(videoId int64) (int64, error) {
+	var count int64
+
+	DB.Table("favorite").
+		Where("video_id=? AND is_favorite=?", videoId, true).
+		Count(&count)
+
+	return count, nil
+}
+
+// FavoriteUserList 根据视频找到所有点赞用户的id
+func (*FavoriteModel) FavoriteUserList(videoId int64) ([]int64, error) {
+	var userIds []int64
+
+	result := DB.Table("favorite").
+		Where("video_id = ? AND is_favorite = ?", videoId, true).
+		Pluck("user_id", &userIds)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return userIds, nil
 }

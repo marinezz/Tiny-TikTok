@@ -18,7 +18,8 @@ const (
 
 	ErrOperate = 1200 // 异常操作
 
-	DataErr = 2000 // 数据创建
+	DataErr  = 2000 // 数据创建
+	CacheErr = 2001 // 缓存异常
 
 	UserExist     = 2100 // 用户相关
 	UserUnExist   = 2101

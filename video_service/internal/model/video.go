@@ -8,14 +8,14 @@ import (
 )
 
 type Video struct {
-	Id            int64 `gorm:"primary_key"`
-	AuthId        int64
-	Title         string
-	CoverUrl      string `gorm:"default:(-)"`
-	PlayUrl       string `gorm:"default:(-)"`
-	FavoriteCount int64  `gorm:"default:0"`
-	CommentCount  int64  `gorm:"default:0"`
-	CreatAt       time.Time
+	Id       int64 `gorm:"primary_key"`
+	AuthId   int64
+	Title    string
+	CoverUrl string `gorm:"default:(-)"`
+	PlayUrl  string `gorm:"default:(-)"`
+	//FavoriteCount int64  `gorm:"default:0"`
+	//CommentCount int64 `gorm:"default:0"`
+	CreatAt time.Time
 }
 
 type VideoModel struct {
@@ -118,8 +118,8 @@ func (*VideoModel) GetVideoListByUser(userId int64) ([]Video, error) {
 }
 
 // AddFavoriteCount 喜欢记录 + 1
-func (*VideoModel) AddFavoriteCount(videoId int64) error {
-	result := DB.Model(&Video{}).Where("id = ?", videoId).
+func (*VideoModel) AddFavoriteCount(tx *gorm.DB, videoId int64) error {
+	result := tx.Model(&Video{}).Where("id = ?", videoId).
 		Update("favorite_count", gorm.Expr("favorite_count + ?", 1))
 	if result.Error != nil {
 		return result.Error
@@ -129,8 +129,8 @@ func (*VideoModel) AddFavoriteCount(videoId int64) error {
 }
 
 // DeleteFavoriteCount 喜欢记录 - 1
-func (*VideoModel) DeleteFavoriteCount(videoId int64) error {
-	result := DB.Model(&Video{}).Where("id = ?", videoId).
+func (*VideoModel) DeleteFavoriteCount(tx *gorm.DB, videoId int64) error {
+	result := tx.Model(&Video{}).Where("id = ?", videoId).
 		Update("favorite_count", gorm.Expr("favorite_count - ?", 1))
 	if result.Error != nil {
 		return result.Error

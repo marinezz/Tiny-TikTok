@@ -2,15 +2,22 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/go-redis/redis/v8"
+	"log"
+	"strconv"
 	"time"
 	"utils/exception"
 	"video/internal/model"
 	"video/internal/service"
+	"video/pkg/cache"
 )
 
 // CommentAction 评论操作
 func (*VideoService) CommentAction(ctx context.Context, req *service.CommentActionRequest) (resp *service.CommentActionResponse, err error) {
 	resp = new(service.CommentActionResponse)
+	key := fmt.Sprintf("%s:%s:%s", "video", "comment_list", strconv.FormatInt(req.VideoId, 10))
 	comment := model.Comment{
 		UserId:  req.UserId,
 		VideoId: req.VideoId,
@@ -24,31 +31,29 @@ func (*VideoService) CommentAction(ctx context.Context, req *service.CommentActi
 	if action == 1 {
 		comment.CreatAt = time
 
-		tx := model.DB.Begin()
-		defer func() {
-			if r := recover(); r != nil {
-				tx.Rollback()
-			}
-		}()
-
 		// 事务中执行创建操作
+		tx := model.DB.Begin()
 		id, err := model.GetCommentInstance().CreateComment(tx, &comment)
 		if err != nil {
-			tx.Rollback()
-			resp.StatusCode = exception.SUCCESS
-			resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
+			resp.StatusCode = exception.CommentErr
+			resp.StatusMsg = exception.GetMsg(exception.CommentErr)
 			resp.Comment = nil
 			return resp, err
 		}
+		comment.Id = id
+		comment.CommentStatus = true
+		commentJson, _ := json.Marshal(comment)
 
-		// 视频评论数量 + 1
-		err = model.GetVideoInstance().AddCommentCount(tx, req.VideoId)
+		// 存入缓存中
+		member := redis.Z{
+			Score:  float64(time.Unix()),
+			Member: commentJson,
+		}
+
+		err = cache.Redis.ZAdd(cache.Ctx, key, &member).Err()
 		if err != nil {
 			tx.Rollback()
-			resp.StatusCode = exception.SUCCESS
-			resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
-			resp.Comment = nil
-			return resp, err
+			return nil, fmt.Errorf("缓存错误：%v", err)
 		}
 
 		tx.Commit()
@@ -69,16 +74,11 @@ func (*VideoService) CommentAction(ctx context.Context, req *service.CommentActi
 	}
 
 	// 删除评论
-	comment.CreatAt = time
-
 	tx := model.DB.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
+	commentInstance, err := model.GetCommentInstance().GetComment(tx, req.CommentId)
+	commentMarshal, _ := json.Marshal(commentInstance)
 
-	err = model.GetCommentInstance().DeleteComment(tx, req.CommentId)
+	err = model.GetCommentInstance().DeleteComment(req.CommentId)
 	if err != nil {
 		resp.StatusCode = exception.CommentDeleteErr
 		resp.StatusMsg = exception.GetMsg(exception.CommentDeleteErr)
@@ -86,15 +86,16 @@ func (*VideoService) CommentAction(ctx context.Context, req *service.CommentActi
 
 		return resp, err
 	}
-	// 视频评论数量 - 1
-	err = model.GetVideoInstance().DeleteCommentCount(tx, req.VideoId)
-	if err != nil {
-		resp.StatusCode = exception.CommentDeleteErr
-		resp.StatusMsg = exception.GetMsg(exception.CommentDeleteErr)
-		resp.Comment = nil
+	log.Print(commentMarshal)
 
-		return resp, err
+	// 删除缓存
+	count, err := cache.Redis.ZRem(cache.Ctx, key, string(commentMarshal)).Result()
+	log.Printf("删除了： %v 条记录", count)
+	if err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("缓存错误：%v", err)
 	}
+
 	tx.Commit()
 
 	resp.StatusCode = exception.SUCCESS
@@ -107,13 +108,37 @@ func (*VideoService) CommentAction(ctx context.Context, req *service.CommentActi
 // CommentList 评论列表
 func (*VideoService) CommentList(ctx context.Context, req *service.CommentListRequest) (resp *service.CommentListResponse, err error) {
 	resp = new(service.CommentListResponse)
+	var comments []model.Comment
+	key := fmt.Sprintf("%s:%s:%s", "video", "comment_list", strconv.FormatInt(req.VideoId, 10))
 
-	// 根据视频id找到所有的评论
-	comments, err := model.GetCommentInstance().CommentList(req.VideoId)
+	exist, err := cache.Redis.Exists(cache.Ctx, key).Result()
 	if err != nil {
-		resp.StatusCode = exception.CommentUnExist
-		resp.StatusMsg = exception.GetMsg(exception.CommentUnExist)
-		return nil, err
+		log.Print(4)
+		return nil, fmt.Errorf("缓存错误：%v", err)
+	}
+
+	if exist == 0 {
+		err := buildCommentCache(req.VideoId)
+		if err != nil {
+			log.Print(3)
+			return nil, fmt.Errorf("缓存错误：%v", err)
+		}
+	}
+
+	// 查询缓存
+	commentsString, err := cache.Redis.ZRevRange(cache.Ctx, key, 0, -1).Result()
+	if err != nil {
+		log.Print(5)
+		return nil, fmt.Errorf("缓存错误：%v", err)
+	}
+
+	for _, commentString := range commentsString {
+		var comment model.Comment
+		err := json.Unmarshal([]byte(commentString), &comment)
+		if err != nil {
+			return nil, err
+		}
+		comments = append(comments, comment)
 	}
 
 	resp.StatusCode = exception.SUCCESS
@@ -136,4 +161,58 @@ func BuildComments(comments []model.Comment) []*service.Comment {
 	}
 
 	return commentresp
+}
+
+// 构建评论列表缓存
+func buildCommentCache(videoId int64) error {
+	key := fmt.Sprintf("%s:%s:%s", "video", "comment_list", strconv.FormatInt(videoId, 10))
+
+	comments, err := model.GetCommentInstance().CommentList(videoId)
+	if err != nil {
+		return err
+	}
+
+	var zMembers []*redis.Z
+	for _, comment := range comments {
+		commentJSON, err := json.Marshal(comment)
+		if err != nil {
+			fmt.Println("Error encoding comment:", err)
+			continue
+		}
+		zMembers = append(zMembers, &redis.Z{
+			Score:  float64(comment.CreatAt.Unix()),
+			Member: commentJSON,
+		})
+	}
+
+	err = cache.Redis.ZAdd(cache.Ctx, key, zMembers...).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// 通过缓存查看视频得评论数量
+func getCommentCount(videoId int64) int64 {
+	key := fmt.Sprintf("%s:%s:%s", "video", "comment_list", strconv.FormatInt(videoId, 10))
+
+	exists, err := cache.Redis.Exists(cache.Ctx, key).Result()
+	if err != nil {
+		log.Print(err)
+	}
+
+	if exists == 0 {
+		err := buildCommentCache(videoId)
+		if err != nil {
+			log.Print(err)
+		}
+	}
+
+	count, err := cache.Redis.ZCard(cache.Ctx, key).Result()
+	if err != nil {
+		log.Print(err)
+	}
+
+	return count
 }

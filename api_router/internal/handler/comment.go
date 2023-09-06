@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+	"utils/exception"
 )
 
 // CommentAction 评论操作
@@ -36,12 +37,20 @@ func CommentAction(ctx *gin.Context) {
 			commentText = ctx.Query("comment_text")
 		}
 		commentActionReq.CommentText = commentText
-	} else {
+	} else if commentActionReq.ActionType == 2 {
 		commentId := ctx.PostForm("comment_id")
 		if commentId == "" {
 			commentId = ctx.Query("comment_id")
 		}
 		commentActionReq.CommentId, _ = strconv.ParseInt(commentId, 10, 64)
+	} else {
+		r := res.FavoriteActionResponse{
+			StatusCode: exception.ErrOperate,
+			StatusMsg:  exception.GetMsg(exception.ErrOperate),
+		}
+
+		ctx.JSON(http.StatusOK, r)
+		return
 	}
 
 	videoServiceClient := ctx.Keys["video_service"].(service.VideoServiceClient)

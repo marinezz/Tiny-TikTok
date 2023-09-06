@@ -48,9 +48,9 @@ func (*CommentModel) CreateComment(tx *gorm.DB, comment *Comment) (id int64, err
 }
 
 // DeleteComment 删除评论
-func (*CommentModel) DeleteComment(tx *gorm.DB, commentId int64) error {
+func (*CommentModel) DeleteComment(commentId int64) error {
 	var comment Comment
-	result := tx.First(&comment, commentId)
+	result := DB.First(&comment, commentId)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -59,7 +59,7 @@ func (*CommentModel) DeleteComment(tx *gorm.DB, commentId int64) error {
 	}
 
 	comment.CommentStatus = false
-	result = tx.Save(&comment)
+	result = DB.Save(&comment)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -71,11 +71,25 @@ func (*CommentModel) CommentList(videoId int64) ([]Comment, error) {
 	var comments []Comment
 
 	result := DB.Table("comment").
-		Where("video_id = ?", videoId).
+		Where("video_id = ? AND comment_status = ?", videoId, true).
 		Find(&comments)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
 	return comments, nil
+}
+
+// GetComment 根据评论ID找到具体评论
+func (*CommentModel) GetComment(tx *gorm.DB, commentId int64) (Comment, error) {
+	comment := Comment{}
+
+	result := tx.Table("comment").
+		Where("id = ?", commentId).
+		First(&comment)
+	if result.Error != nil {
+		return comment, result.Error
+	}
+
+	return comment, nil
 }

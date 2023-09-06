@@ -2,13 +2,17 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"github.com/google/uuid"
 	"log"
+	"strconv"
 	"sync"
 	"time"
 	"utils/exception"
 	"video/internal/model"
 	"video/internal/service"
+	"video/pkg/cache"
 	"video/pkg/cut"
 	"video/third_party"
 )
@@ -62,6 +66,7 @@ func (*VideoService) Feed(ctx context.Context, req *service.FeedRequest) (resp *
 func (*VideoService) PublishAction(ctx context.Context, req *service.PublishActionRequest) (resp *service.PublishActionResponse, err error) {
 	var updataErr, creatErr error
 	resp = new(service.PublishActionResponse)
+	key := fmt.Sprintf("%s:%s", "user", "work_count")
 
 	// 获取参数,生成地址
 	title := req.Title
@@ -93,13 +98,11 @@ func (*VideoService) PublishAction(ctx context.Context, req *service.PublishActi
 		defer wg.Done()
 		// 创建video
 		video := model.Video{
-			AuthId:        req.UserId,
-			Title:         title,
-			CoverUrl:      pictureUrl,
-			PlayUrl:       videoUrl,
-			FavoriteCount: 0,
-			CommentCount:  0,
-			CreatAt:       time.Now(),
+			AuthId:   req.UserId,
+			Title:    title,
+			CoverUrl: pictureUrl,
+			PlayUrl:  videoUrl,
+			CreatAt:  time.Now(),
 		}
 		creatErr = model.GetVideoInstance().Create(&video)
 	}()
@@ -126,6 +129,36 @@ func (*VideoService) PublishAction(ctx context.Context, req *service.PublishActi
 		resp.StatusMsg = exception.GetMsg(exception.VideoUploadErr)
 		return resp, updataErr
 	}
+
+	// 发布成功，缓存中作品总数 + 1，如果不存在缓存则不做操作
+	exist, err := cache.Redis.HExists(cache.Ctx, key, strconv.FormatInt(req.UserId, 10)).Result()
+	if err != nil {
+		return nil, fmt.Errorf("缓存错误：%v", err)
+	}
+
+	if exist {
+		// 字段存在，该记录数量 + 1
+		_, err = cache.Redis.HIncrBy(cache.Ctx, key, strconv.FormatInt(req.UserId, 10), 1).Result()
+		if err != nil {
+			return nil, fmt.Errorf("缓存错误：%v", err)
+		}
+	}
+
+	// 发布成功延时双删发布列表
+	workKey := fmt.Sprintf("%s:%s:%s", "user", "work_list", strconv.FormatInt(req.UserId, 10))
+	err = cache.Redis.Del(cache.Ctx, workKey).Err()
+	if err != nil {
+		return nil, fmt.Errorf("缓存错误：%v", err)
+	}
+	defer func() {
+		go func() {
+			//延时3秒执行
+			time.Sleep(time.Second * 3)
+			//再次删除缓存
+			cache.Redis.Del(cache.Ctx, workKey)
+		}()
+	}()
+
 	resp.StatusCode = exception.SUCCESS
 	resp.StatusMsg = exception.GetMsg(exception.SUCCESS)
 
@@ -135,13 +168,37 @@ func (*VideoService) PublishAction(ctx context.Context, req *service.PublishActi
 // PublishList 发布列表
 func (*VideoService) PublishList(ctx context.Context, req *service.PublishListRequest) (resp *service.PublishListResponse, err error) {
 	resp = new(service.PublishListResponse)
+	var videos []model.Video
+	key := fmt.Sprintf("%s:%s:%s", "user", "work_list", strconv.FormatInt(req.UserId, 10))
 
-	// 根据用户id找到所有的视频
-	videos, err := model.GetVideoInstance().GetVideoListByUser(req.UserId)
+	// 根据用户id找到所有的视频,先找缓存，再查数据库
+	exists, err := cache.Redis.Exists(cache.Ctx, key).Result()
 	if err != nil {
-		resp.StatusCode = exception.VideoUnExist
-		resp.StatusMsg = exception.GetMsg(exception.VideoUnExist)
-		return resp, err
+		return nil, fmt.Errorf("缓存错误：%v", err)
+	}
+
+	if exists > 0 {
+		videosString, err := cache.Redis.Get(cache.Ctx, key).Result()
+		if err != nil {
+			return nil, fmt.Errorf("缓存错误：%v", err)
+		}
+		err = json.Unmarshal([]byte(videosString), &videos)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		videos, err = model.GetVideoInstance().GetVideoListByUser(req.UserId)
+		if err != nil {
+			resp.StatusCode = exception.VideoUnExist
+			resp.StatusMsg = exception.GetMsg(exception.VideoUnExist)
+			return resp, err
+		}
+		// 放入缓存中
+		videosJson, _ := json.Marshal(videos)
+		err := cache.Redis.Set(cache.Ctx, key, videosJson, 12*time.Hour).Err()
+		if err != nil {
+			return nil, fmt.Errorf("缓存错误：%v", err)
+		}
 	}
 
 	resp.StatusCode = exception.SUCCESS
@@ -159,26 +216,96 @@ func (*VideoService) CountInfo(ctx context.Context, req *service.CountRequest) (
 
 	for _, userId := range userIds {
 		var count service.Count
+
 		// 获取赞的数量
-		count.TotalFavorited, err = model.GetVideoInstance().GetFavoritedCount(userId)
+		var videos []model.Video
+		exist, err := cache.Redis.HExists(cache.Ctx, "user:total_favorite", strconv.FormatInt(userId, 10)).Result()
 		if err != nil {
-			resp.StatusCode = exception.VideoNoFavorite
-			resp.StatusMsg = exception.GetMsg(exception.VideoNoFavorite)
-			return resp, err
+			return nil, fmt.Errorf("缓存错误：%v", err)
 		}
+
+		if exist == false {
+			// 获取所有作品数量
+			var totalFavorite int64
+			totalFavorite = 0
+			videos, err = model.GetVideoInstance().GetVideoListByUser(userId)
+
+			for _, video := range videos {
+				videoId := video.Id
+
+				favoriteCount, err := model.GetFavoriteInstance().GetVideoFavoriteCount(videoId)
+				if err != nil {
+					resp.StatusCode = exception.UserNoFavorite
+					resp.StatusMsg = exception.GetMsg(exception.UserNoFavorite)
+					return resp, err
+				}
+				log.Print(favoriteCount)
+				totalFavorite = totalFavorite + favoriteCount
+				log.Print(totalFavorite)
+			}
+			// 放入缓存
+			err = cache.Redis.HSet(cache.Ctx, "user:total_favorite", strconv.FormatInt(userId, 10), totalFavorite).Err()
+			if err != nil {
+				return nil, err
+			}
+			cache.Redis.Expire(cache.Ctx, "user:total_favorite", 5*time.Minute)
+		} else {
+			// 存在缓存
+			count.TotalFavorited, err = cache.Redis.HGet(cache.Ctx, "user:total_favorite", strconv.FormatInt(userId, 10)).Int64()
+			if err != nil {
+				return nil, fmt.Errorf("缓存错误：%v", err)
+			}
+		}
+
 		// 获取作品数量
-		count.WorkCount, err = model.GetVideoInstance().GetWorkCount(userId)
+		exist, err = cache.Redis.HExists(cache.Ctx, "user:work_count", strconv.FormatInt(userId, 10)).Result()
 		if err != nil {
-			resp.StatusCode = exception.UserNoVideo
-			resp.StatusMsg = exception.GetMsg(exception.UserNoVideo)
-			return resp, err
+			return nil, fmt.Errorf("缓存错误：%v", err)
 		}
+		// 如果存在则读缓存
+		if exist {
+			count.WorkCount, err = cache.Redis.HGet(cache.Ctx, "user:work_count", strconv.FormatInt(userId, 10)).Int64()
+			if err != nil {
+				return nil, fmt.Errorf("缓存错误：%v", err)
+			}
+		} else {
+			// 不存在则查数据库
+			count.WorkCount, err = model.GetVideoInstance().GetWorkCount(userId)
+			if err != nil {
+				resp.StatusCode = exception.UserNoVideo
+				resp.StatusMsg = exception.GetMsg(exception.UserNoVideo)
+				return resp, err
+			}
+			// 放入缓存
+			err := cache.Redis.HSet(cache.Ctx, "user:work_count", strconv.FormatInt(userId, 10), count.WorkCount).Err()
+			if err != nil {
+				return nil, fmt.Errorf("缓存错误：%v", err)
+			}
+		}
+
 		// 获取喜欢数量
-		count.FavoriteCount, err = model.GetFavoriteInstance().GetFavoriteCount(userId)
+		exist, err = cache.Redis.HExists(cache.Ctx, "user:favorite_count", strconv.FormatInt(userId, 10)).Result()
 		if err != nil {
-			resp.StatusCode = exception.UserNoFavorite
-			resp.StatusMsg = exception.GetMsg(exception.UserNoFavorite)
-			return resp, err
+			return nil, fmt.Errorf("缓存错误：%v", err)
+		}
+		if exist {
+			count.FavoriteCount, err = cache.Redis.HGet(cache.Ctx, "user:favorite_count", strconv.FormatInt(userId, 10)).Int64()
+			if err != nil {
+				return nil, fmt.Errorf("缓存错误：%v", err)
+			}
+		} else {
+			count.FavoriteCount, err = model.GetFavoriteInstance().GetFavoriteCount(userId)
+			if err != nil {
+				resp.StatusCode = exception.UserNoFavorite
+				resp.StatusMsg = exception.GetMsg(exception.UserNoFavorite)
+				return resp, err
+			}
+
+			// 放入缓存
+			err := cache.Redis.HSet(cache.Ctx, "user:favorite_count", strconv.FormatInt(userId, 10), count.FavoriteCount).Err()
+			if err != nil {
+				return nil, fmt.Errorf("缓存错误：%v", err)
+			}
 		}
 
 		resp.Counts = append(resp.Counts, &count)
@@ -194,17 +321,18 @@ func BuildVideo(videos []model.Video, userId int64) []*service.Video {
 	var videoResp []*service.Video
 
 	for _, video := range videos {
-		// 获取is_favorite的状态
-		isFavorite, _ := model.GetFavoriteInstance().IsFavorite(userId, video.Id)
-
+		// 查询是否有喜欢的缓存，如果有，比对缓存，如果没有，构建缓存再查缓存
+		favorite := isFavorite(userId, video.Id)
+		favoriteCount := getFavoriteCount(video.Id)
+		commentCount := getCommentCount(video.Id)
 		videoResp = append(videoResp, &service.Video{
 			Id:            video.Id,
 			AuthId:        video.AuthId,
 			PlayUrl:       video.PlayUrl,
 			CoverUrl:      video.CoverUrl,
-			FavoriteCount: video.FavoriteCount,
-			CommentCount:  video.CommentCount,
-			IsFavorite:    isFavorite,
+			FavoriteCount: favoriteCount,
+			CommentCount:  commentCount,
+			IsFavorite:    favorite,
 			Title:         video.Title,
 		})
 	}
@@ -216,13 +344,15 @@ func BuildVideoForFavorite(videos []model.Video, isFavorite bool) []*service.Vid
 	var videoResp []*service.Video
 
 	for _, video := range videos {
+		favoriteCount := getFavoriteCount(video.Id)
+		commentCount := getCommentCount(video.Id)
 		videoResp = append(videoResp, &service.Video{
 			Id:            video.Id,
 			AuthId:        video.AuthId,
 			PlayUrl:       video.PlayUrl,
 			CoverUrl:      video.CoverUrl,
-			FavoriteCount: video.FavoriteCount,
-			CommentCount:  video.CommentCount,
+			FavoriteCount: favoriteCount,
+			CommentCount:  commentCount,
 			IsFavorite:    isFavorite,
 			Title:         video.Title,
 		})
