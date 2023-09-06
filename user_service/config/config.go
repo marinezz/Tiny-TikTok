@@ -50,3 +50,14 @@ func DbDnsInit() string {
 
 	return dns
 }
+
+func RedisURLInit() string {
+	password := viper.GetString("redis.password")
+	address := viper.GetString("redis.address")
+	database := viper.GetString("redis.database")
+
+	InitConfig()
+	RedisURL := "redis://" + password + "@" + address + "/" + database
+
+	return RedisURL
+}
