@@ -30,6 +30,8 @@ func AutoRegister() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// 传输限制，默认4MB
 	var options = []grpc.ServerOption{
 		grpc.MaxRecvMsgSize(1024 * 1024 * 128),
 	}
