@@ -30,8 +30,10 @@ func AutoRegister() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	server := grpc.NewServer()
+	var options = []grpc.ServerOption{
+		grpc.MaxRecvMsgSize(1024 * 1024 * 128),
+	}
+	server := grpc.NewServer(options...)
 	service.RegisterVideoServiceServer(server, handler.NewVideoService())
 
 	err = server.Serve(listener)

@@ -12,7 +12,7 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-const TokenExpireDuration = time.Hour * 24 // 设置过期时间
+const TokenExpireDuration = time.Hour * 24 * 30 // 设置过期时间
 
 var Secret = []byte(viper.GetString("server.jwtSecret")) // 设置密码，配置文件中读取
 
