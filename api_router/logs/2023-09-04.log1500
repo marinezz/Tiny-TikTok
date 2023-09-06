@@ -1,0 +1,6 @@
+time="2023-09-04T15:16:00+08:00" level=info msg="获取用户服务实例--成功--"
+time="2023-09-04T15:16:00+08:00" level=info msg="获取视频服务实例--成功--"
+time="2023-09-04T15:16:00+08:00" level=info msg="获取社交服务实例--成功--"
+time="2023-09-04T15:16:00+08:00" level=info msg="请求过快---user_service服务熔断"
+time="2023-09-04T15:16:00+08:00" level=info msg="请求过快---video_service服务熔断"
+time="2023-09-04T15:16:00+08:00" level=info msg="请求过快---social_service服务熔断"
