@@ -4,6 +4,7 @@ import (
 	"context"
 	"social/internal/model"
 	"social/internal/service"
+	"social/pkg/cache"
 	"utils/exception"
 )
 
@@ -18,6 +19,18 @@ func NewSocialService() *SocialService {
 // FollowAction 关注服务
 func (*SocialService) FollowAction(ctx context.Context, req *service.FollowRequest) (resp *service.FollowResponse, err error) {
 	resp = new(service.FollowResponse)
+
+	if req.UserId == req.ToUserId {
+		resp.StatusCode = exception.FollowSelfErr
+		resp.StatusMsg = exception.GetMsg(exception.FollowSelfErr)
+		return resp, nil
+	}
+
+	resp.StatusCode = exception.ERROR
+	resp.StatusMsg = exception.GetMsg(exception.ERROR)
+
+	/* mysql操作
+
 	follow := model.Follow{
 		UserId:   req.UserId,
 		ToUserId: req.ToUserId,
@@ -25,9 +38,12 @@ func (*SocialService) FollowAction(ctx context.Context, req *service.FollowReque
 	}
 
 	err = model.GetFollowInstance().FollowAction(&follow)
+	*/
+
+	// redis操作
+	err = cache.FollowAction(req.UserId, req.ToUserId, req.ActionType)
+
 	if err != nil {
-		resp.StatusCode = exception.ERROR
-		resp.StatusMsg = exception.GetMsg(exception.ERROR)
 		return resp, nil
 	}
 	resp.StatusCode = exception.SUCCESS
@@ -37,10 +53,16 @@ func (*SocialService) FollowAction(ctx context.Context, req *service.FollowReque
 
 func (*SocialService) GetFollowList(ctx context.Context, req *service.FollowListRequest) (resp *service.FollowListResponse, err error) {
 	resp = new(service.FollowListResponse)
-	err = model.GetFollowInstance().GetFollowList(req.UserId, &resp.UserId)
+	resp.StatusCode = exception.ERROR
+	resp.StatusMsg = exception.GetMsg(exception.ERROR)
+
+	// mysql操作
+	// err = model.GetFollowInstance().GetFollowList(req.UserId, &resp.UserId)
+
+	// redis操作
+	err = cache.GetFollowList(req.UserId, &resp.UserId)
+
 	if err != nil {
-		resp.StatusCode = exception.ERROR
-		resp.StatusMsg = exception.GetMsg(exception.ERROR)
 		return resp, nil
 	}
 	resp.StatusCode = exception.SUCCESS
@@ -50,10 +72,15 @@ func (*SocialService) GetFollowList(ctx context.Context, req *service.FollowList
 
 func (*SocialService) GetFollowerList(ctx context.Context, req *service.FollowListRequest) (resp *service.FollowListResponse, err error) {
 	resp = new(service.FollowListResponse)
-	err = model.GetFollowInstance().GetFollowerList(req.UserId, &resp.UserId)
+	resp.StatusCode = exception.ERROR
+	resp.StatusMsg = exception.GetMsg(exception.ERROR)
+
+	// mysql操作
+	// err = model.GetFollowInstance().GetFollowerList(req.UserId, &resp.UserId)
+
+	// redis操作
+	err = cache.GetFollowerList(req.UserId, &resp.UserId)
 	if err != nil {
-		resp.StatusCode = exception.ERROR
-		resp.StatusMsg = exception.GetMsg(exception.ERROR)
 		return resp, nil
 	}
 	resp.StatusCode = exception.SUCCESS
@@ -63,10 +90,16 @@ func (*SocialService) GetFollowerList(ctx context.Context, req *service.FollowLi
 
 func (*SocialService) GetFriendList(ctx context.Context, req *service.FollowListRequest) (resp *service.FollowListResponse, err error) {
 	resp = new(service.FollowListResponse)
-	err = model.GetFollowInstance().GetFriendList(req.UserId, &resp.UserId)
+	resp.StatusCode = exception.ERROR
+	resp.StatusMsg = exception.GetMsg(exception.ERROR)
+
+	// mysql
+	// err = model.GetFollowInstance().GetFriendList(req.UserId, &resp.UserId)
+
+	// mysql
+	err = cache.GetFriendList(req.UserId, &resp.UserId)
+
 	if err != nil {
-		resp.StatusCode = exception.ERROR
-		resp.StatusMsg = exception.GetMsg(exception.ERROR)
 		return resp, nil
 	}
 	resp.StatusCode = exception.SUCCESS
@@ -77,9 +110,14 @@ func (*SocialService) GetFriendList(ctx context.Context, req *service.FollowList
 func (*SocialService) GetFollowInfo(ctx context.Context, req *service.FollowInfoRequest) (resp *service.FollowInfoResponse, err error) {
 	resp = new(service.FollowInfoResponse)
 	for _, toUserId := range req.ToUserId {
+		/* mysql
 		res1, err1 := model.GetFollowInstance().IsFollow(req.UserId, toUserId)
 		cnt2, err2 := model.GetFollowInstance().GetFollowCount(toUserId)
 		cnt3, err3 := model.GetFollowInstance().GetFollowerCount(toUserId)
+		*/
+		res1, err1 := cache.IsFollow(req.UserId, toUserId)
+		cnt2, err2 := cache.GetFollowCount(toUserId)
+		cnt3, err3 := cache.GetFollowerCount(toUserId)
 		if err1 != nil || err2 != nil || err3 != nil {
 			resp.StatusCode = exception.ERROR
 			resp.StatusMsg = exception.GetMsg(exception.ERROR)

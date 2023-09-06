@@ -38,4 +38,6 @@ const (
 	CommentErr       = 2400
 	CommentUnExist   = 2401 // 评论相关
 	CommentDeleteErr = 2402
+
+	FollowSelfErr = 2500 // 关注相关
 )

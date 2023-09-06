@@ -1,8 +1,11 @@
 package model
 
 import (
+	"encoding/json"
 	"errors"
 	"gorm.io/gorm"
+	"log"
+	"strconv"
 	"sync"
 	"utils/snowFlake"
 )
@@ -101,9 +104,11 @@ func (*FollowModel) GetFriendList(reqUser int64, UserId *[]int64) error {
 
 func (*FollowModel) GetFollowCount(reqUser int64) (int64, error) {
 	var cnt int64
+
 	if err := DB.Model(&Follow{}).Where(&Follow{UserId: reqUser, IsFollow: 1}).Count(&cnt).Error; err != nil {
 		return 0, err
 	}
+
 	return cnt, nil
 }
 
@@ -113,4 +118,42 @@ func (*FollowModel) GetFollowerCount(reqUser int64) (int64, error) {
 		return 0, err
 	}
 	return cnt, nil
+}
+
+func (*FollowModel) RedisToMysql(data string) error {
+	// 先将所有follow置为2
+	if err := DB.Model(&Follow{}).Where("is_follow = ?", 1).Update("is_follow", 2).Error; err != nil {
+		return err
+	}
+	// 转换data为map
+	var follows map[string][]string
+	if err := json.Unmarshal([]byte(data), &follows); err != nil {
+		return err
+	}
+	// 对每一个关注进行操作
+	var wg sync.WaitGroup
+	var errs []error
+
+	for userId, toUserIds := range follows {
+		userid, _ := strconv.ParseInt(userId, 10, 64)
+		for _, toUserId := range toUserIds {
+			touserid, _ := strconv.ParseInt(toUserId, 10, 64)
+			wg.Add(1)
+			go func(userId int64, toUserId int64) {
+				defer wg.Done()
+				follow := Follow{UserId: userId, ToUserId: toUserId, IsFollow: 1}
+				err := GetFollowInstance().FollowAction(&follow)
+				if err != nil {
+					errs = append(errs, err)
+				}
+			}(userid, touserid)
+
+		}
+	}
+
+	wg.Wait()
+
+	log.Println(errs)
+
+	return nil
 }

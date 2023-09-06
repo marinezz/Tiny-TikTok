@@ -31,6 +31,8 @@ var Msg = map[int]string{
 	CommentErr:       "评论失败",
 	CommentUnExist:   "评论不存在",
 	CommentDeleteErr: "评论删除失败",
+
+	FollowSelfErr: "关注自己",
 }
 
 // GetMsg 根据状态码获取对应信息
