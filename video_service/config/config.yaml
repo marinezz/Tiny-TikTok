@@ -20,4 +20,4 @@ oss:
   bucketName: tiny-tiktok
   endpoint: https://oss-cn-chengdu.aliyuncs.com
   accessKeyId: LTAI5t8nzWHJ1tm92ZPUKods
-  accessKeySecret: oeQsHP77JHKhpx6bgEVT4WGUAYY8bh
+  accessKeySecret: secret
