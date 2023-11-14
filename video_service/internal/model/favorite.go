@@ -30,11 +30,26 @@ func GetFavoriteInstance() *FavoriteModel {
 
 // AddFavorite 创建点赞
 func (*FavoriteModel) AddFavorite(tx *gorm.DB, favorite *Favorite) error {
-	flake, _ := snowFlake.NewSnowFlake(7, 2)
-	favorite.Id = flake.NextId()
-	result := tx.Create(&favorite)
-	if result.Error != nil {
+	result := tx.Where("user_id=? AND video_id=?", favorite.UserId, favorite.VideoId).First(&favorite)
+	// 发生除没找到记录的其它错误
+	if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return result.Error
+	}
+
+	// 如果找到了记录，更新is_favorite置为0
+	if result.RowsAffected > 0 {
+		favorite.IsFavorite = true
+		result = tx.Save(&favorite)
+		if result.Error != nil {
+			return result.Error
+		}
+	} else {
+		flake, _ := snowFlake.NewSnowFlake(7, 2)
+		favorite.Id = flake.NextId()
+		result = tx.Create(&favorite)
+		if result.Error != nil {
+			return result.Error
+		}
 	}
 
 	return nil
